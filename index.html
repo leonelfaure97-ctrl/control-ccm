@@ -8,6 +8,44 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SheetJS para leer archivos de Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+    /* Diseño de tarjetas adaptable para celulares */
+    @media (max-width: 768px) {
+        /* Ocultamos los encabezados tradicionales de la tabla en celular */
+        table thead {
+            display: none;
+        }
+        /* Hacemos que cada fila se comporte como una tarjeta flotante */
+        table, #tabla-equipos tr, #tabla-termografia tr {
+            display: block;
+            width: 100%;
+        }
+        #tabla-equipos tr, #tabla-termografia tr {
+            margin-bottom: 1rem;
+            background-color: #1e293b; /* Color slate-800 */
+            border: 1px solid #334155; /* Borde slate-700 */
+            border-radius: 0.75rem;
+            padding: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        /* Cada celda ahora ocupa todo el ancho con espacio prolijo */
+        #tabla-equipos td, #tabla-termografia td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            text-align: right;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #334155/40;
+        }
+        #tabla-equipos td:last-child, #tabla-termografia td:last-child {
+            border-bottom: none;
+            justify-content: center;
+            margin-top: 0.5rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #334155;
+        }
+    }
+</style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
 

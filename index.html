@@ -18,7 +18,7 @@
                 <img src="logo.jpg" alt="Logo Molinos Agro" class="h-10 w-auto object-contain">
             </div>
             <div>
-                <h1 id="titulo-sistema" class="text-xl font-bold tracking-wide text-white">Gestión de Cubicles y CCMs</h1>
+                <h1 id="titulo-sistema" class="text-xl font-bold tracking-wide text-white">Gestión de Cubicles y CCM</h1>
                 <p class="text-xs text-blue-200">Mantenimiento Eléctrico de Planta</p>
             </div>
         </div>
@@ -30,7 +30,7 @@
             </span>
 
             <button onclick="cambiarVista('ccm')" id="btn-vista-ccm" class="bg-blue-600 text-white font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2">
-                <i class="fa-solid fa-bolt"></i> CCMs
+                <i class="fa-solid fa-bolt"></i> CCM
             </button>
             <button onclick="cambiarVista('termografia')" id="btn-vista-termo" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2 border border-slate-700">
                 <i class="fa-solid fa-fire-flame-curved text-amber-400"></i> Termografía
@@ -270,7 +270,7 @@
                 btnTermo.className = "bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2 border border-slate-700";
                 actCcm.classList.remove("hidden");
                 actTermo.classList.add("hidden");
-                titulo.innerText = "Gestión de Cubicles y CCMs";
+                titulo.innerText = "Gestión de Cubicles y CCM";
             } else {
                 vCcm.classList.add("hidden");
                 vTermo.classList.remove("hidden");
@@ -744,7 +744,10 @@
             reader.readAsArrayBuffer(file);
         }
 
-        // Carga inicial
+        // Carga inicial inmediata de datos guardados
+        poblarFiltros();
+        renderizarTablaCCM(listaEquipos);
+        renderizarTablaTermografia(listaTermografias);
         cargarDatosGenerales();
     </script>
 </body>

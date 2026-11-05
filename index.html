@@ -191,6 +191,27 @@
                     <div><label class="block text-xs font-medium text-slate-400 mb-1">Potencia (kW / HP)</label><input type="text" id="form-potencia" placeholder="ej: 45 kW" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:outline-none"></div>
                     <div><label class="block text-xs font-medium text-slate-400 mb-1">Corriente Nominal (A)</label><input type="text" id="form-inominal" placeholder="ej: 82 A" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:outline-none"></div>
                 </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Tipo de Fusibles</label>
+                        <select id="form-fusible-tipo" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:outline-none">
+                            <option value="">Sin especificar</option>
+                            <option value="NH00">NH00</option>
+                            <option value="NH0">NH0</option>
+                            <option value="NH1">NH1</option>
+                            <option value="NH2">NH2</option>
+                            <option value="NH3">NH3</option>
+                            <option value="Cilíndrico 10x38">Cilíndrico 10x38</option>
+                            <option value="Cilíndrico 14x51">Cilíndrico 14x51</option>
+                            <option value="Cilíndrico 22x58">Cilíndrico 22x58</option>
+                            <option value="Otro">Otro</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Calibre / Corriente Fusible (A)</label>
+                        <input type="text" id="form-fusible-amp" placeholder="ej: 160 A / gG" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:outline-none">
+                    </div>
+                </div>
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Tipo de Arranque</label>
                     <select id="form-arranque" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-green-500 focus:outline-none">
@@ -205,28 +226,6 @@
             <div class="px-6 py-4 border-t border-slate-700 flex justify-end gap-3 bg-slate-900/50">
                 <button onclick="cerrarModal()" class="px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600">Cancelar</button>
                 <button onclick="guardarEquipo()" class="px-4 py-2 rounded-lg text-sm bg-[#1E7333] hover:bg-green-700 text-white font-semibold">Guardar</button>
-            </div>
-        </div>
-    </div>
-
-<!-- MODAL DE DETALLE COMPLETO DEL EQUIPO -->
-    <div id="modal-detalle-equipo" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
-        <div class="bg-slate-800 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
-                <h3 id="detalle-titulo" class="font-bold text-lg text-green-400">
-                    <i class="fa-solid fa-circle-info mr-2"></i> Detalle del Equipo
-                </h3>
-                <button onclick="cerrarModalDetalle()" class="text-slate-400 hover:text-slate-200">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
-            </div>
-            
-            <div id="contenido-detalle-equipo" class="p-6 overflow-y-auto space-y-4 flex-1 text-sm text-slate-300">
-                <!-- Se puebla dinámicamente -->
-            </div>
-
-            <div class="px-6 py-4 border-t border-slate-700 flex justify-end gap-2 bg-slate-900/50">
-                <button onclick="cerrarModalDetalle()" class="px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 text-white">Cerrar</button>
             </div>
         </div>
     </div>
@@ -305,6 +304,28 @@
 
             <div class="px-6 py-4 border-t border-slate-700 flex justify-end bg-slate-900/50">
                 <button onclick="cerrarModalHistorial()" class="px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 text-white">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE DETALLE COMPLETO DEL EQUIPO -->
+    <div id="modal-detalle-equipo" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
+                <h3 id="detalle-titulo" class="font-bold text-lg text-green-400">
+                    <i class="fa-solid fa-circle-info mr-2"></i> Detalle del Equipo
+                </h3>
+                <button onclick="cerrarModalDetalle()" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div id="contenido-detalle-equipo" class="p-6 overflow-y-auto space-y-4 flex-1 text-sm text-slate-300">
+                <!-- Se puebla dinámicamente -->
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-700 flex justify-end gap-2 bg-slate-900/50">
+                <button onclick="cerrarModalDetalle()" class="px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 text-white">Cerrar</button>
             </div>
         </div>
     </div>
@@ -432,29 +453,17 @@
                 }
 
                 if (typeof poblarFiltros === 'function') poblarFiltros();
-                function renderizarTablaCCM(equipos) {
-            const tbody = document.getElementById("tabla-equipos");
-            if (equipos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No hay equipos registrados. Podés cargar un Excel o agregar uno nuevo.</td></tr>`;
-                return;
+                renderizarTablaCCM(listaEquipos);
+                if (syncStatus) {
+                    syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado a la Nube`;
+                }
+            } catch (err) {
+                console.warn("Operando en modo local por red lenta o bloqueada:", err);
+                if (syncStatus) {
+                    syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local Activo`;
+                }
+                renderizarTablaCCM(listaEquipos);
             }
-            tbody.innerHTML = equipos.map(eq => `
-                <tr class="hover:bg-slate-700/30 transition cursor-pointer" onclick="verDetalleEquipo('${eq.id}')">
-                    <td class="py-3 px-4 font-semibold text-green-400" data-label="Tag / Equipo:">
-                        <span class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-circle-chevron-right text-xs text-slate-500"></i> ${eq.tag || ''}</span>
-                    </td>
-                    <td class="py-3 px-4" data-label="Cubicle:">${eq.cubicle || ''}</td>
-                    <td class="py-3 px-4" data-label="CCM:">${eq.ccm || ''}</td>
-                    <td class="py-3 px-4" data-label="Potencia:">${eq.potencia || ''}</td>
-                    <td class="py-3 px-4" data-label="I. Nom:">${eq.inominal || ''}</td>
-                    <td class="py-3 px-4" data-label="Arranque:"><span class="bg-slate-700/50 text-slate-300 px-2.5 py-1 rounded-md text-xs">${eq.arranque || ''}</span></td>
-                    <td class="py-3 px-4 text-center flex justify-center gap-1.5 flex-wrap" onclick="event.stopPropagation()">
-                        <button onclick="verHistorialEquipo('${eq.tag}', '${eq.cubicle}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Ver Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</button>
-                        <button onclick="editarEquipo('${eq.id}')" class="bg-slate-700 hover:bg-slate-600 text-green-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Editar"><i class="fa-solid fa-pen"></i> Editar</button>
-                        <button onclick="eliminarEquipo('${eq.id}')" class="bg-slate-700 hover:bg-slate-600 text-red-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Eliminar"><i class="fa-solid fa-trash"></i> Eliminar</button>
-                    </td>
-                </tr>
-            `).join('');
         }
 
         window.cargarTermografiasNube = async function() {
@@ -490,14 +499,16 @@
                 return;
             }
             tbody.innerHTML = equipos.map(eq => `
-                <tr class="hover:bg-slate-700/30 transition">
-                    <td class="py-3 px-4 font-semibold text-green-400">${eq.tag || ''}</td>
-                    <td class="py-3 px-4">${eq.cubicle || ''}</td>
-                    <td class="py-3 px-4">${eq.ccm || ''}</td>
-                    <td class="py-3 px-4">${eq.potencia || ''}</td>
-                    <td class="py-3 px-4">${eq.inominal || ''}</td>
-                    <td class="py-3 px-4"><span class="bg-slate-700/50 text-slate-300 px-2.5 py-1 rounded-md text-xs">${eq.arranque || ''}</span></td>
-                    <td class="py-3 px-4 text-center flex justify-center gap-1.5 flex-wrap">
+                <tr class="hover:bg-slate-700/30 transition cursor-pointer" onclick="verDetalleEquipo('${eq.id}')">
+                    <td class="py-3 px-4 font-semibold text-green-400" data-label="Tag / Equipo:">
+                        <span class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-circle-chevron-right text-xs text-slate-500"></i> ${eq.tag || ''}</span>
+                    </td>
+                    <td class="py-3 px-4" data-label="Cubicle:">${eq.cubicle || ''}</td>
+                    <td class="py-3 px-4" data-label="CCM:">${eq.ccm || ''}</td>
+                    <td class="py-3 px-4" data-label="Potencia:">${eq.potencia || ''}</td>
+                    <td class="py-3 px-4" data-label="I. Nom:">${eq.inominal || ''}</td>
+                    <td class="py-3 px-4" data-label="Arranque:"><span class="bg-slate-700/50 text-slate-300 px-2.5 py-1 rounded-md text-xs">${eq.arranque || ''}</span></td>
+                    <td class="py-3 px-4 text-center flex justify-center gap-1.5 flex-wrap" onclick="event.stopPropagation()">
                         <button onclick="verHistorialEquipo('${eq.tag}', '${eq.cubicle}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Ver Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</button>
                         <button onclick="editarEquipo('${eq.id}')" class="bg-slate-700 hover:bg-slate-600 text-green-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Editar"><i class="fa-solid fa-pen"></i> Editar</button>
                         <button onclick="eliminarEquipo('${eq.id}')" class="bg-slate-700 hover:bg-slate-600 text-red-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Eliminar"><i class="fa-solid fa-trash"></i> Eliminar</button>
@@ -546,6 +557,54 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        window.verDetalleEquipo = function(id) {
+            const eq = listaEquipos.find(item => item.id === id);
+            if (!eq) return;
+
+            const contenedor = document.getElementById("contenido-detalle-equipo");
+            const titulo = document.getElementById("detalle-titulo");
+
+            titulo.innerHTML = `<i class="fa-solid fa-bolt text-green-400 mr-2"></i> Tag: ${eq.tag || 'Sin Tag'}`;
+
+            contenedor.innerHTML = `
+                <div class="grid grid-cols-2 gap-3 bg-slate-900 p-4 rounded-xl border border-slate-700">
+                    <div><span class="text-slate-400 text-xs block">Cubicle:</span> <strong class="text-slate-100">${eq.cubicle || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">CCM:</span> <strong class="text-slate-100">${eq.ccm || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Sector / Área:</span> <strong class="text-slate-100">${eq.sector || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Tipo de Arranque:</span> <strong class="text-slate-100">${eq.arranque || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Potencia:</span> <strong class="text-slate-100">${eq.potencia || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Corriente Nominal:</span> <strong class="text-slate-100">${eq.inominal || '-'}</strong></div>
+                </div>
+
+                <div class="bg-amber-950/40 border border-amber-800/60 p-4 rounded-xl space-y-2">
+                    <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt-lightning"></i> Especificación de Fusibles
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div><span class="text-amber-200/70 text-xs block">Tipo / Tamaño:</span> <span class="font-semibold text-slate-100">${eq.fusibleTipo || 'No especificado'}</span></div>
+                        <div><span class="text-amber-200/70 text-xs block">Calibre / Corriente:</span> <span class="font-semibold text-slate-100">${eq.fusibleAmp || 'No especificado'}</span></div>
+                    </div>
+                </div>
+
+                ${eq.notas ? `
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                        <span class="text-slate-400 text-xs block mb-1">Notas generales:</span>
+                        <p class="text-xs text-slate-300 italic">${eq.notas}</p>
+                    </div>
+                ` : ''}
+            `;
+
+            const modal = document.getElementById("modal-detalle-equipo");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        window.cerrarModalDetalle = function() {
+            const modal = document.getElementById("modal-detalle-equipo");
+            modal.classList.remove("flex");
+            modal.classList.add("hidden");
         }
 
         window.verHistorialEquipo = async function(tag, cubicle) {
@@ -613,9 +672,9 @@
                                     <span class="px-1.5 py-0.5 rounded font-mono font-bold ${clsS}">S</span>
                                     <span class="px-1.5 py-0.5 rounded font-mono font-bold ${clsT}">T</span>
                                 </div>
-                                ${t.imagen ? `<button onclick="verImagenGrande('${t.imagen}')" class="text-amber-400 hover:underline inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> Ver Foto</button>` : ''}
+                                ${t.imagen ? `<button onclick="verImagenGrande('\${t.imagen}')" class="text-amber-400 hover:underline inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> Ver Foto</button>` : ''}
                             </div>
-                            ${t.observaciones ? `<p class="text-xs text-slate-400 bg-slate-950/50 p-2 rounded border border-slate-800/80 italic mt-1">${t.observaciones}</p>` : ''}
+                            ${t.observaciones ? `<p class="text-xs text-slate-400 bg-slate-950/50 p-2 rounded border border-slate-800/80 italic mt-1">\${t.observaciones}</p>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -625,7 +684,7 @@
                 contenedor.innerHTML = `
                     <div class="text-center py-8 text-slate-400">
                         <i class="fa-solid fa-clipboard-check text-3xl mb-2 text-slate-500"></i>
-                        <p>No hay registros ni notas históricas asociadas a este equipo todavía.</p>
+                        <p>No hay registros ni notas históricas asociadas al equipo todavía.</p>
                     </div>
                 `;
             } else {
@@ -681,136 +740,3 @@
                 console.error("Error al guardar nota en Firebase:", err);
                 alert("No se pudo guardar en la nube.");
             }
-        }
-
-        window.eliminarNotaHistorial = async function(id) {
-            if (!confirm("¿Estás seguro de eliminar esta nota del historial?")) return;
-            try {
-                await deleteDoc(doc(db, "historial_equipos", id));
-                verHistorialEquipo(tagEquipoActualHistorial, "");
-            } catch (err) {
-                console.error("Error al eliminar nota:", err);
-            }
-        }
-
-        window.previsualizarImagen = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                imagenBase64Temporal = e.target.result;
-                document.getElementById("img-preview").src = imagenBase64Temporal;
-                document.getElementById("contenedor-preview").classList.remove("hidden");
-            }
-            reader.readAsDataURL(file);
-        }
-
-        window.verImagenGrande = function(base64) {
-            document.getElementById("img-visor-grande").src = base64;
-            document.getElementById("modal-visor-img").classList.remove("hidden");
-            document.getElementById("modal-visor-img").classList.add("flex");
-        }
-
-        window.cerrarVisorImg = function() {
-            document.getElementById("modal-visor-img").classList.remove("flex");
-            document.getElementById("modal-visor-img").classList.add("hidden");
-        }
-
-        window.abrirModalTermoNuevo = function() {
-            document.getElementById("termo-modal-titulo").innerText = "Nueva Inspección Termográfica";
-            document.getElementById("termo-id").value = "";
-            document.getElementById("termo-tablero").value = "";
-            document.getElementById("termo-columna").value = "";
-            document.getElementById("termo-equipo").value = "";
-            document.getElementById("termo-temp").value = "";
-            document.getElementById("termo-foto").value = "";
-            document.getElementById("termo-obs").value = "";
-            document.getElementById("fase-r").checked = false;
-            document.getElementById("fase-s").checked = false;
-            document.getElementById("fase-t").checked = false;
-            imagenBase64Temporal = "";
-            document.getElementById("contenedor-preview").classList.add("hidden");
-            document.getElementById("modal-termo").classList.remove("hidden");
-            document.getElementById("modal-termo").classList.add("flex");
-        }
-
-        window.abrirModalTermoEditar = function(id) {
-            const t = listaTermografias.find(item => item.id === id);
-            if (!t) return;
-            document.getElementById("termo-modal-titulo").innerText = "Editar Inspección Termográfica";
-            document.getElementById("termo-id").value = t.id;
-            document.getElementById("termo-tablero").value = t.tablero || "";
-            document.getElementById("termo-columna").value = t.columna || "";
-            document.getElementById("termo-equipo").value = t.equipo || "";
-            document.getElementById("termo-temp").value = t.temp || "";
-            document.getElementById("termo-foto").value = t.foto || "";
-            document.getElementById("termo-obs").value = t.observaciones || "";
-            
-            const fases = t.fases || { r: false, s: false, t: false };
-            document.getElementById("fase-r").checked = fases.r;
-            document.getElementById("fase-s").checked = fases.s;
-            document.getElementById("fase-t").checked = fases.t;
-
-            imagenBase64Temporal = t.imagen || "";
-            if (imagenBase64Temporal) {
-                document.getElementById("img-preview").src = imagenBase64Temporal;
-                document.getElementById("contenedor-preview").classList.remove("hidden");
-            }
-            document.getElementById("modal-termo").classList.remove("hidden");
-            document.getElementById("modal-termo").classList.add("flex");
-        }
-
-        window.onload = function() {
-            cargarDatosGenerales();
-        };
-window.verDetalleEquipo = function(id) {
-            const eq = listaEquipos.find(item => item.id === id);
-            if (!eq) return;
-
-            const contenedor = document.getElementById("contenido-detalle-equipo");
-            const titulo = document.getElementById("detalle-titulo");
-
-            titulo.innerHTML = `<i class="fa-solid fa-bolt text-green-400 mr-2"></i> Tag: ${eq.tag || 'Sin Tag'}`;
-
-            contenedor.innerHTML = `
-                <div class="grid grid-cols-2 gap-3 bg-slate-900 p-4 rounded-xl border border-slate-700">
-                    <div><span class="text-slate-400 text-xs block">Cubicle:</span> <strong class="text-slate-100">${eq.cubicle || '-'}</strong></div>
-                    <div><span class="text-slate-400 text-xs block">CCM:</span> <strong class="text-slate-100">${eq.ccm || '-'}</strong></div>
-                    <div><span class="text-slate-400 text-xs block">Sector / Área:</span> <strong class="text-slate-100">${eq.sector || '-'}</strong></div>
-                    <div><span class="text-slate-400 text-xs block">Tipo de Arranque:</span> <strong class="text-slate-100">${eq.arranque || '-'}</strong></div>
-                    <div><span class="text-slate-400 text-xs block">Potencia:</span> <strong class="text-slate-100">${eq.potencia || '-'}</strong></div>
-                    <div><span class="text-slate-400 text-xs block">Corriente Nominal:</span> <strong class="text-slate-100">${eq.inominal || '-'}</strong></div>
-                </div>
-
-                <div class="bg-amber-950/40 border border-amber-800/60 p-4 rounded-xl space-y-2">
-                    <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                        <i class="fa-solid fa-bolt-lightning"></i> Especificación de Fusibles
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 pt-1">
-                        <div><span class="text-amber-200/70 text-xs block">Tipo / Tamaño:</span> <span class="font-semibold text-slate-100">${eq.fusibleTipo || 'No especificado'}</span></div>
-                        <div><span class="text-amber-200/70 text-xs block">Calibre / Corriente:</span> <span class="font-semibold text-slate-100">${eq.fusibleAmp || 'No especificado'}</span></div>
-                    </div>
-                </div>
-
-                ${eq.notas ? `
-                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
-                        <span class="text-slate-400 text-xs block mb-1">Notas generales:</span>
-                        <p class="text-xs text-slate-300 italic">${eq.notas}</p>
-                    </div>
-                ` : ''}
-            `;
-
-            const modal = document.getElementById("modal-detalle-equipo");
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
-        }
-
-        window.cerrarModalDetalle = function() {
-            const modal = document.getElementById("modal-detalle-equipo");
-            modal.classList.remove("flex");
-            modal.classList.add("hidden");
-        }
-
-    </script>
-</body>
-</html>

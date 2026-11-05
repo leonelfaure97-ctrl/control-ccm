@@ -8,44 +8,44 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- SheetJS para leer archivos de Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<style>
-    /* Diseño de tarjetas adaptable para celulares */
-    @media (max-width: 768px) {
-        /* Ocultamos los encabezados tradicionales de la tabla en celular */
-        table thead {
-            display: none;
+
+    <style>
+        /* Diseño de tarjetas adaptable para celulares */
+        @media (max-width: 768px) {
+            table thead {
+                display: none;
+            }
+            table, #tabla-equipos tr, #tabla-termografia tr {
+                display: block;
+                width: 100%;
+            }
+            #tabla-equipos tr, #tabla-termografia tr {
+                margin-bottom: 1rem;
+                background-color: #1e293b;
+                border: 1px solid #334155;
+                border-radius: 0.75rem;
+                padding: 1rem;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            }
+            #tabla-equipos td, #tabla-termografia td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                text-align: right;
+                padding: 0.5rem 0;
+                border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+            }
+            #tabla-equipos td:last-child, #tabla-termografia td:last-child {
+                border-bottom: none;
+                justify-content: center;
+                margin-top: 0.5rem;
+                padding-top: 0.75rem;
+                border-top: 1px solid #334155;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
         }
-        /* Hacemos que cada fila se comporte como una tarjeta flotante */
-        table, #tabla-equipos tr, #tabla-termografia tr {
-            display: block;
-            width: 100%;
-        }
-        #tabla-equipos tr, #tabla-termografia tr {
-            margin-bottom: 1rem;
-            background-color: #1e293b; /* Color slate-800 */
-            border: 1px solid #334155; /* Borde slate-700 */
-            border-radius: 0.75rem;
-            padding: 1rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        }
-        /* Cada celda ahora ocupa todo el ancho con espacio prolijo */
-        #tabla-equipos td, #tabla-termografia td {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            text-align: right;
-            padding: 0.5rem 0;
-            border-bottom: 1px solid #334155/40;
-        }
-        #tabla-equipos td:last-child, #tabla-termografia td:last-child {
-            border-bottom: none;
-            justify-content: center;
-            margin-top: 0.5rem;
-            padding-top: 0.75rem;
-            border-top: 1px solid #334155;
-        }
-    }
-</style>
+    </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
 
@@ -253,7 +253,8 @@
             </div>
         </div>
     </div>
-<!-- MODAL DE HISTORIAL POR EQUIPO -->
+
+    <!-- MODAL DE HISTORIAL POR EQUIPO -->
     <div id="modal-historial" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
         <div class="bg-slate-800 border border-slate-700 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
@@ -395,9 +396,10 @@
                     <td class="py-3 px-4">${eq.potencia || ''}</td>
                     <td class="py-3 px-4">${eq.inominal || ''}</td>
                     <td class="py-3 px-4"><span class="bg-slate-700/50 text-slate-300 px-2.5 py-1 rounded-md text-xs">${eq.arranque || ''}</span></td>
-                    <td class="py-3 px-4 text-center flex justify-center gap-1">
-                        <button onclick="editarEquipo('${eq.id}')" class="text-slate-400 hover:text-green-400 p-1.5" title="Editar"><i class="fa-solid fa-pen"></i></button>
-                        <button onclick="eliminarEquipo('${eq.id}')" class="text-slate-400 hover:text-red-400 p-1.5" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                    <td class="py-3 px-4 text-center flex justify-center gap-1.5 flex-wrap">
+                        <button onclick="verHistorialEquipo('${eq.tag}', '${eq.cubicle}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Ver Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</button>
+                        <button onclick="editarEquipo('${eq.id}')" class="bg-slate-700 hover:bg-slate-600 text-green-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Editar"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button onclick="eliminarEquipo('${eq.id}')" class="bg-slate-700 hover:bg-slate-600 text-red-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Eliminar"><i class="fa-solid fa-trash"></i> Eliminar</button>
                     </td>
                 </tr>
             `).join('');
@@ -443,6 +445,73 @@
                     </tr>
                 `;
             }).join('');
+        }
+
+        window.verHistorialEquipo = function(tag, cubicle) {
+            const titulo = document.getElementById("historial-titulo");
+            const contenedor = document.getElementById("contenido-historial");
+            
+            titulo.innerHTML = `<i class="fa-solid fa-clock-rotate-left mr-2"></i> Historial: <span class="text-green-400">${tag || 'Sin Tag'}</span> (${cubicle || 'Sin Cubicle'})`;
+            
+            const tagBusqueda = (tag || '').toLowerCase().trim();
+            const cubicleBusqueda = (cubicle || '').toLowerCase().trim();
+
+            const filtrados = listaTermografias.filter(t => {
+                const eq = (t.equipo || '').toLowerCase();
+                const col = (t.columna || '').toLowerCase();
+                const tab = (t.tablero || '').toLowerCase();
+                return (tagBusqueda && (eq.includes(tagBusqueda) || col.includes(tagBusqueda) || tab.includes(tagBusqueda))) ||
+                       (cubicleBusqueda && (col.includes(cubicleBusqueda) || tab.includes(cubicleBusqueda)));
+            });
+
+            if (filtrados.length === 0) {
+                contenedor.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fa-solid fa-clipboard-check text-3xl mb-2 text-slate-500"></i>
+                        <p>No se encontraron inspecciones termográficas asociadas a este equipo.</p>
+                    </div>
+                `;
+            } else {
+                contenedor.innerHTML = filtrados.map(t => {
+                    const fases = t.fases || { r: false, s: false, t: false };
+                    const clsR = fases.r ? "bg-red-600 text-white" : "bg-slate-900 text-slate-600";
+                    const clsS = fases.s ? "bg-amber-600 text-white" : "bg-slate-900 text-slate-600";
+                    const clsT = fases.t ? "bg-blue-600 text-white" : "bg-slate-900 text-slate-600";
+
+                    return `
+                        <div class="bg-slate-900 border border-slate-700 p-4 rounded-xl space-y-2">
+                            <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                                <span class="font-semibold text-amber-400"><i class="fa-solid fa-fire-flame-curved mr-1"></i> ${t.tablero || 'Tablero'} / ${t.columna || 'Columna'}</span>
+                                <span class="text-xs bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded-md font-mono">${t.temp || 'N/A'}</span>
+                            </div>
+                            <div class="text-xs text-slate-300 grid grid-cols-2 gap-2">
+                                <div><strong class="text-slate-400">Equipo:</strong> ${t.equipo || '-'}</div>
+                                <div><strong class="text-slate-400">N° Foto FLIR:</strong> ${t.foto || '-'}</div>
+                            </div>
+                            <div class="flex items-center justify-between text-xs pt-1">
+                                <div class="flex items-center gap-1">
+                                    <span class="text-slate-400 mr-1">Fases:</span>
+                                    <span class="px-1.5 py-0.5 rounded font-mono font-bold ${clsR}">R</span>
+                                    <span class="px-1.5 py-0.5 rounded font-mono font-bold ${clsS}">S</span>
+                                    <span class="px-1.5 py-0.5 rounded font-mono font-bold ${clsT}">T</span>
+                                </div>
+                                ${t.imagen ? `<button onclick="verImagenGrande('${t.imagen}')" class="text-amber-400 hover:underline inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> Ver Foto</button>` : ''}
+                            </div>
+                            ${t.observaciones ? `<p class="text-xs text-slate-400 bg-slate-950/50 p-2 rounded border border-slate-800/80 italic mt-2">${t.observaciones}</p>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            const modal = document.getElementById("modal-historial");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        window.cerrarModalHistorial = function() {
+            const modal = document.getElementById("modal-historial");
+            modal.classList.remove("flex");
+            modal.classList.add("hidden");
         }
 
         window.previsualizarImagen = function(event) {
@@ -507,305 +576,15 @@
             if (imagenBase64Temporal) {
                 document.getElementById("img-preview").src = imagenBase64Temporal;
                 document.getElementById("contenedor-preview").classList.remove("hidden");
-            } else {
-                document.getElementById("contenedor-preview").classList.add("hidden");
             }
-
             document.getElementById("modal-termo").classList.remove("hidden");
             document.getElementById("modal-termo").classList.add("flex");
         }
 
-        window.cerrarModalTermo = function() {
-            document.getElementById("modal-termo").classList.remove("flex");
-            document.getElementById("modal-termo").classList.add("hidden");
-        }
-
-        window.guardarTermografia = async function() {
-            const id = document.getElementById("termo-id").value;
-            const datos = {
-                tablero: document.getElementById("termo-tablero").value.trim(),
-                columna: document.getElementById("termo-columna").value.trim(),
-                equipo: document.getElementById("termo-equipo").value.trim(),
-                temp: document.getElementById("termo-temp").value.trim(),
-                foto: document.getElementById("termo-foto").value.trim(),
-                observaciones: document.getElementById("termo-obs").value.trim(),
-                fases: {
-                    r: document.getElementById("fase-r").checked,
-                    s: document.getElementById("fase-s").checked,
-                    t: document.getElementById("fase-t").checked
-                },
-                imagen: imagenBase64Temporal
-            };
-
-            if (!datos.tablero || !datos.equipo) {
-                alert("Por favor completá al menos el Tablero y el Equipo.");
-                return;
-            }
-
-            try {
-                if (id) {
-                    await updateDoc(doc(db, "termografias", id), datos);
-                } else {
-                    await addDoc(collection(db, "termografias"), datos);
-                }
-                cerrarModalTermo();
-                await cargarTermografiasNube();
-            } catch (err) {
-                console.error(err);
-                alert("Error al guardar la inspección termográfica.");
-            }
-        }
-
-        window.eliminarTermografia = async function(id) {
-            if (confirm("¿Estás seguro de eliminar este registro termográfico?")) {
-                try {
-                    await deleteDoc(doc(db, "termografias", id));
-                    await cargarTermografiasNube();
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        }
-
-        window.importarExcelTermo = async function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
-
-                    if (json.length === 0) {
-                        alert("El Excel está vacío.");
-                        return;
-                    }
-
-                    let contador = 0;
-                    for (let row of json) {
-                        const keys = Object.keys(row);
-                        const findVal = (terms) => {
-                            const foundKey = keys.find(k => {
-                                const cleanKey = k.toLowerCase().trim();
-                                return terms.some(t => cleanKey.includes(t));
-                            });
-                            return foundKey ? String(row[foundKey]).trim() : '';
-                        };
-
-                        const tablero = findVal(['tablero', 'tag', 'equipo']);
-                        const columna = findVal(['columna', 'cubic', 'ccm']);
-                        const equipo = findVal(['equipo', 'nombre', 'motor', 'elemento']);
-                        const temp = findVal(['temp', 'temperatura', 'grados']);
-                        const foto = findVal(['n° de foto', 'foto', 'nro', 'n° foto']);
-                        const observaciones = findVal(['observaciones', 'obs', 'comentario', 'nota']);
-
-                        // Lógica optimizada para leer si la fase está marcada en verde, con texto, x, sí, etc.
-                        const checkFase = (faseTerms) => {
-                            const foundKey = keys.find(k => {
-                                const ck = k.toLowerCase().trim();
-                                return faseTerms.some(t => ck === t || ck.includes(t));
-                            });
-                            if (!foundKey) return false;
-                            const val = String(row[foundKey]).toLowerCase().trim();
-                            return val === 'verde' || val === 'si' || val === 'x' || val === '1' || val === 'true' || val.includes('verde');
-                        };
-
-                        const faseR = checkFase(['fase r', ' r ']) || checkFase(['r']);
-                        const faseS = checkFase(['fase s', ' s ']) || checkFase(['s']);
-                        const faseT = checkFase(['fase t', ' t ']) || checkFase(['t']);
-
-                        if (tablero || equipo || columna) {
-                            await addDoc(collection(db, "termografias"), {
-                                tablero: tablero || 'S/N',
-                                columna: columna || 'S/C',
-                                equipo: equipo || 'EQUIPO',
-                                temp: temp || '-',
-                                foto: foto || '-',
-                                observaciones: observaciones || '',
-                                fases: { 
-                                    r: faseR, 
-                                    s: faseS, 
-                                    t: faseT 
-                                },
-                                imagen: ''
-                            });
-                            contador++;
-                        }
-                    }
-                    alert(`¡Se importaron ${contador} registros termográficos correctamente!`);
-                    event.target.value = '';
-                    await cargarTermografiasNube();
-                } catch (err) {
-                    console.error(err);
-                    alert("Error al leer el Excel de termografía.");
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        window.filtrarTermografia = function() {
-            const texto = document.getElementById("termo-busqueda").value.toLowerCase();
-            const filtrados = listaTermografias.filter(t => {
-                return Object.values(t).some(val => String(val).toLowerCase().includes(texto));
-            });
-            renderizarTablaTermografia(filtrados);
-        }
-
-        function poblarFiltros() {
-            const ccmSet = [...new Set(listaEquipos.map(e => e.ccm).filter(Boolean))];
-            const selCCM = document.getElementById("filtro-ccm");
-            const valCCM = selCCM.value;
-            selCCM.innerHTML = `<option value="">Todos los CCM</option>` + ccmSet.map(c => `<option value="${c}">${c}</option>`).join('');
-            selCCM.value = valCCM;
-        }
-
-        window.filtrarEquipos = function() {
-            const texto = document.getElementById("input-busqueda").value.toLowerCase();
-            const ccmFiltro = document.getElementById("filtro-ccm").value;
-            const filtrados = listaEquipos.filter(eq => {
-                const coincideTexto = Object.values(eq).some(val => String(val).toLowerCase().includes(texto));
-                const coincideCCM = !ccmFiltro || eq.ccm === ccmFiltro;
-                return coincideTexto && coincideCCM;
-            });
-            renderizarTablaCCM(filtrados);
-        }
-
-        window.abrirModalNuevo = function() {
-            document.getElementById("modal-titulo").innerText = "Nuevo Equipo / Cubicle";
-            document.getElementById("equipo-id").value = "";
-            document.getElementById("form-tag").value = "";
-            document.getElementById("form-cubicle").value = "";
-            document.getElementById("form-ccm").value = "";
-            document.getElementById("form-sector").value = "";
-            document.getElementById("form-potencia").value = "";
-            document.getElementById("form-inominal").value = "";
-            document.getElementById("form-arranque").value = "Directo (DOL)";
-            document.getElementById("form-notas").value = "";
-            document.getElementById("modal-equipo").classList.remove("hidden");
-            document.getElementById("modal-equipo").classList.add("flex");
-        }
-
-        window.cerrarModal = function() {
-            document.getElementById("modal-equipo").classList.remove("flex");
-            document.getElementById("modal-equipo").classList.add("hidden");
-        }
-
-        window.guardarEquipo = async function() {
-            const id = document.getElementById("equipo-id").value;
-            const datos = {
-                tag: document.getElementById("form-tag").value.trim(),
-                cubicle: document.getElementById("form-cubicle").value.trim(),
-                ccm: document.getElementById("form-ccm").value.trim(),
-                sector: document.getElementById("form-sector").value.trim(),
-                potencia: document.getElementById("form-potencia").value.trim(),
-                inominal: document.getElementById("form-inominal").value.trim(),
-                arranque: document.getElementById("form-arranque").value,
-                notas: document.getElementById("form-notas").value.trim()
-            };
-            if (!datos.tag || !datos.cubicle || !datos.ccm) {
-                alert("Completá Tag, Cubicle y CCM.");
-                return;
-            }
-            try {
-                if (id) {
-                    await updateDoc(doc(db, "equipos_ccm", id), datos);
-                } else {
-                    await addDoc(collection(db, "equipos_ccm"), datos);
-                }
-                cerrarModal();
-                await cargarDatosGenerales();
-            } catch (err) {
-                console.error(err);
-                alert("Error al guardar.");
-            }
-        }
-
-        window.editarEquipo = function(id) {
-            const eq = listaEquipos.find(item => item.id === id);
-            if (!eq) return;
-            document.getElementById("modal-titulo").innerText = "Editar Equipo";
-            document.getElementById("equipo-id").value = eq.id;
-            document.getElementById("form-tag").value = eq.tag || "";
-            document.getElementById("form-cubicle").value = eq.cubicle || "";
-            document.getElementById("form-ccm").value = eq.ccm || "";
-            document.getElementById("form-sector").value = eq.sector || "";
-            document.getElementById("form-potencia").value = eq.potencia || "";
-            document.getElementById("form-inominal").value = eq.inominal || "";
-            document.getElementById("form-arranque").value = eq.arranque || "Directo (DOL)";
-            document.getElementById("form-notas").value = eq.notas || "";
-            document.getElementById("modal-equipo").classList.remove("hidden");
-            document.getElementById("modal-equipo").classList.add("flex");
-        }
-
-        window.eliminarEquipo = async function(id) {
-            if (confirm("¿Estás seguro de eliminar este equipo?")) {
-                try {
-                    await deleteDoc(doc(db, "equipos_ccm", id));
-                    await cargarDatosGenerales();
-                } catch (e) {
-                    console.error(e);
-                }
-            }
-        }
-
-        window.importarExcelCCM = async function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = async function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const json = XLSX.utils.sheet_to_json(worksheet);
-                    let contador = 0;
-                    for (let row of json) {
-                        const keys = Object.keys(row);
-                        const findVal = (terms) => {
-                            const foundKey = keys.find(k => terms.some(t => k.toLowerCase().includes(t)));
-                            return foundKey ? String(row[foundKey]).trim() : '';
-                        };
-                        const tag = findVal(['tag', 'equipo', 'motor', 'nombre', 'codigo']);
-                        const cubicle = findVal(['cubic', 'cubicle', 'pos', 'modulo']);
-                        const ccm = findVal(['ccm', 'centro', 'barra']);
-                        const sector = findVal(['sector', 'area', 'zona']);
-                        const potencia = findVal(['pot', 'kw', 'hp']);
-                        const inominal = findVal(['inom', 'amp', 'corriente']);
-                        const arranque = findVal(['arran', 'tipo']);
-
-                        if (tag) {
-                            await addDoc(collection(db, "equipos_ccm"), {
-                                tag: tag || 'S/N',
-                                cubicle: cubicle || 'S/C',
-                                ccm: ccm || 'CCM General',
-                                sector: sector || 'Planta',
-                                potencia: potencia || '-',
-                                inominal: inominal || '-',
-                                arranque: arranque || 'Directo (DOL)',
-                                notas: ''
-                            });
-                            contador++;
-                        }
-                    }
-                    alert(`¡Se importaron ${contador} equipos exitosamente!`);
-                    event.target.value = '';
-                    await cargarDatosGenerales();
-                } catch (err) {
-                    console.error(err);
-                    alert("Error al leer el Excel.");
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-
-        // Carga inicial inmediata de datos guardados
-        poblarFiltros();
-        renderizarTablaCCM(listaEquipos);
-        renderizarTablaTermografia(listaTermografias);
-        cargarDatosGenerales();
+        // Ejecución inicial automática al cargar la página
+        window.onload = function() {
+            cargarDatosGenerales();
+        };
     </script>
 </body>
 </html>

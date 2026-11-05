@@ -209,6 +209,28 @@
         </div>
     </div>
 
+<!-- MODAL DE DETALLE COMPLETO DEL EQUIPO -->
+    <div id="modal-detalle-equipo" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="px-6 py-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/50">
+                <h3 id="detalle-titulo" class="font-bold text-lg text-green-400">
+                    <i class="fa-solid fa-circle-info mr-2"></i> Detalle del Equipo
+                </h3>
+                <button onclick="cerrarModalDetalle()" class="text-slate-400 hover:text-slate-200">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            
+            <div id="contenido-detalle-equipo" class="p-6 overflow-y-auto space-y-4 flex-1 text-sm text-slate-300">
+                <!-- Se puebla dinámicamente -->
+            </div>
+
+            <div class="px-6 py-4 border-t border-slate-700 flex justify-end gap-2 bg-slate-900/50">
+                <button onclick="cerrarModalDetalle()" class="px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 text-white">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL DE INSPECCIÓN TERMOGRÁFICA -->
     <div id="modal-termo" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm hidden justify-center items-center p-4 z-50">
         <div class="bg-slate-800 border border-slate-700 w-full max-w-xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -410,17 +432,29 @@
                 }
 
                 if (typeof poblarFiltros === 'function') poblarFiltros();
-                renderizarTablaCCM(listaEquipos);
-                if (syncStatus) {
-                    syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado a la Nube`;
-                }
-            } catch (err) {
-                console.warn("Operando en modo local por red lenta o bloqueada:", err);
-                if (syncStatus) {
-                    syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local Activo`;
-                }
-                renderizarTablaCCM(listaEquipos);
+                function renderizarTablaCCM(equipos) {
+            const tbody = document.getElementById("tabla-equipos");
+            if (equipos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No hay equipos registrados. Podés cargar un Excel o agregar uno nuevo.</td></tr>`;
+                return;
             }
+            tbody.innerHTML = equipos.map(eq => `
+                <tr class="hover:bg-slate-700/30 transition cursor-pointer" onclick="verDetalleEquipo('${eq.id}')">
+                    <td class="py-3 px-4 font-semibold text-green-400" data-label="Tag / Equipo:">
+                        <span class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-circle-chevron-right text-xs text-slate-500"></i> ${eq.tag || ''}</span>
+                    </td>
+                    <td class="py-3 px-4" data-label="Cubicle:">${eq.cubicle || ''}</td>
+                    <td class="py-3 px-4" data-label="CCM:">${eq.ccm || ''}</td>
+                    <td class="py-3 px-4" data-label="Potencia:">${eq.potencia || ''}</td>
+                    <td class="py-3 px-4" data-label="I. Nom:">${eq.inominal || ''}</td>
+                    <td class="py-3 px-4" data-label="Arranque:"><span class="bg-slate-700/50 text-slate-300 px-2.5 py-1 rounded-md text-xs">${eq.arranque || ''}</span></td>
+                    <td class="py-3 px-4 text-center flex justify-center gap-1.5 flex-wrap" onclick="event.stopPropagation()">
+                        <button onclick="verHistorialEquipo('${eq.tag}', '${eq.cubicle}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Ver Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</button>
+                        <button onclick="editarEquipo('${eq.id}')" class="bg-slate-700 hover:bg-slate-600 text-green-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Editar"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button onclick="eliminarEquipo('${eq.id}')" class="bg-slate-700 hover:bg-slate-600 text-red-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Eliminar"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         window.cargarTermografiasNube = async function() {
@@ -729,6 +763,54 @@
         window.onload = function() {
             cargarDatosGenerales();
         };
+window.verDetalleEquipo = function(id) {
+            const eq = listaEquipos.find(item => item.id === id);
+            if (!eq) return;
+
+            const contenedor = document.getElementById("contenido-detalle-equipo");
+            const titulo = document.getElementById("detalle-titulo");
+
+            titulo.innerHTML = `<i class="fa-solid fa-bolt text-green-400 mr-2"></i> Tag: ${eq.tag || 'Sin Tag'}`;
+
+            contenedor.innerHTML = `
+                <div class="grid grid-cols-2 gap-3 bg-slate-900 p-4 rounded-xl border border-slate-700">
+                    <div><span class="text-slate-400 text-xs block">Cubicle:</span> <strong class="text-slate-100">${eq.cubicle || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">CCM:</span> <strong class="text-slate-100">${eq.ccm || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Sector / Área:</span> <strong class="text-slate-100">${eq.sector || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Tipo de Arranque:</span> <strong class="text-slate-100">${eq.arranque || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Potencia:</span> <strong class="text-slate-100">${eq.potencia || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Corriente Nominal:</span> <strong class="text-slate-100">${eq.inominal || '-'}</strong></div>
+                </div>
+
+                <div class="bg-amber-950/40 border border-amber-800/60 p-4 rounded-xl space-y-2">
+                    <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt-lightning"></i> Especificación de Fusibles
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div><span class="text-amber-200/70 text-xs block">Tipo / Tamaño:</span> <span class="font-semibold text-slate-100">${eq.fusibleTipo || 'No especificado'}</span></div>
+                        <div><span class="text-amber-200/70 text-xs block">Calibre / Corriente:</span> <span class="font-semibold text-slate-100">${eq.fusibleAmp || 'No especificado'}</span></div>
+                    </div>
+                </div>
+
+                ${eq.notas ? `
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                        <span class="text-slate-400 text-xs block mb-1">Notas generales:</span>
+                        <p class="text-xs text-slate-300 italic">${eq.notas}</p>
+                    </div>
+                ` : ''}
+            `;
+
+            const modal = document.getElementById("modal-detalle-equipo");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        window.cerrarModalDetalle = function() {
+            const modal = document.getElementById("modal-detalle-equipo");
+            modal.classList.remove("flex");
+            modal.classList.add("hidden");
+        }
+
     </script>
 </body>
 </html>

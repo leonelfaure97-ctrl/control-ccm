@@ -672,9 +672,9 @@
                                     <span class="px-1.5 py-0.5 rounded font-mono font-bold ${clsS}">S</span>
                                     <span class="px-1.5 py-0.5 rounded font-mono font-bold ${clsT}">T</span>
                                 </div>
-                                ${t.imagen ? `<button onclick="verImagenGrande('\${t.imagen}')" class="text-amber-400 hover:underline inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> Ver Foto</button>` : ''}
+                                ${t.imagen ? `<button onclick="verImagenGrande('${t.imagen}')" class="text-amber-400 hover:underline inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> Ver Foto</button>` : ''}
                             </div>
-                            ${t.observaciones ? `<p class="text-xs text-slate-400 bg-slate-950/50 p-2 rounded border border-slate-800/80 italic mt-1">\${t.observaciones}</p>` : ''}
+                            ${t.observaciones ? `<p class="text-xs text-slate-400 bg-slate-950/50 p-2 rounded border border-slate-800/80 italic mt-1">${t.observaciones}</p>` : ''}
                         </div>
                     `;
                 }).join('');
@@ -740,3 +740,208 @@
                 console.error("Error al guardar nota en Firebase:", err);
                 alert("No se pudo guardar en la nube.");
             }
+        }
+
+        window.eliminarNotaHistorial = async function(id) {
+            if (!confirm("¿Estás seguro de eliminar esta nota del historial?")) return;
+            try {
+                await deleteDoc(doc(db, "historial_equipos", id));
+                verHistorialEquipo(tagEquipoActualHistorial, "");
+            } catch (err) {
+                console.error("Error al eliminar nota:", err);
+            }
+        }
+
+        window.abrirModalNuevo = function() {
+            document.getElementById("modal-titulo").innerText = "Nuevo Equipo / Cubicle";
+            document.getElementById("equipo-id").value = "";
+            document.getElementById("form-tag").value = "";
+            document.getElementById("form-cubicle").value = "";
+            document.getElementById("form-ccm").value = "";
+            document.getElementById("form-sector").value = "";
+            document.getElementById("form-potencia").value = "";
+            document.getElementById("form-inominal").value = "";
+            document.getElementById("form-arranque").value = "Directo (DOL)";
+            document.getElementById("form-fusible-tipo").value = "";
+            document.getElementById("form-fusible-amp").value = "";
+            document.getElementById("form-notas").value = "";
+            
+            document.getElementById("modal-equipo").classList.remove("hidden");
+            document.getElementById("modal-equipo").classList.add("flex");
+        }
+
+        window.editarEquipo = function(id) {
+            const eq = listaEquipos.find(item => item.id === id);
+            if (!eq) return;
+
+            document.getElementById("modal-titulo").innerText = "Editar Equipo / Cubicle";
+            document.getElementById("equipo-id").value = eq.id;
+            document.getElementById("form-tag").value = eq.tag || "";
+            document.getElementById("form-cubicle").value = eq.cubicle || "";
+            document.getElementById("form-ccm").value = eq.ccm || "";
+            document.getElementById("form-sector").value = eq.sector || "";
+            document.getElementById("form-potencia").value = eq.potencia || "";
+            document.getElementById("form-inominal").value = eq.inominal || "";
+            document.getElementById("form-arranque").value = eq.arranque || "Directo (DOL)";
+            document.getElementById("form-fusible-tipo").value = eq.fusibleTipo || "";
+            document.getElementById("form-fusible-amp").value = eq.fusibleAmp || "";
+            document.getElementById("form-notas").value = eq.notas || "";
+
+            document.getElementById("modal-equipo").classList.remove("hidden");
+            document.getElementById("modal-equipo").classList.add("flex");
+        }
+
+        window.guardarEquipo = async function() {
+            const id = document.getElementById("equipo-id").value;
+            const tag = document.getElementById("form-tag").value.trim();
+            const cubicle = document.getElementById("form-cubicle").value.trim();
+            const ccm = document.getElementById("form-ccm").value.trim();
+
+            if (!tag || !cubicle || !ccm) {
+                alert("Por favor completá los campos obligatorios (*): Tag, Cubicle y CCM.");
+                return;
+            }
+
+            const datosEquipo = {
+                tag: tag,
+                cubicle: cubicle,
+                ccm: ccm,
+                sector: document.getElementById("form-sector").value.trim(),
+                potencia: document.getElementById("form-potencia").value.trim(),
+                inominal: document.getElementById("form-inominal").value.trim(),
+                arranque: document.getElementById("form-arranque").value,
+                fusibleTipo: document.getElementById("form-fusible-tipo").value,
+                fusibleAmp: document.getElementById("form-fusible-amp").value.trim(),
+                notas: document.getElementById("form-notas").value.trim()
+            };
+
+            try {
+                if (id) {
+                    await updateDoc(doc(db, "equipos_ccm", id), datosEquipo);
+                } else {
+                    await addDoc(collection(db, "equipos_ccm"), datosEquipo);
+                }
+                cerrarModal();
+                cargarDatosGenerales();
+            } catch (err) {
+                console.error("Error al guardar equipo:", err);
+                alert("Ocurrió un error al guardar en la base de datos.");
+            }
+        }
+
+        window.cerrarModal = function() {
+            document.getElementById("modal-equipo").classList.remove("flex");
+            document.getElementById("modal-equipo").classList.add("hidden");
+        }
+
+        window.previsualizarImagen = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                imagenBase64Temporal = e.target.result;
+                document.getElementById("img-preview").src = imagenBase64Temporal;
+                document.getElementById("contenedor-preview").classList.remove("hidden");
+            }
+            reader.readAsDataURL(file);
+        }
+
+        window.verImagenGrande = function(base64) {
+            document.getElementById("img-visor-grande").src = base64;
+            document.getElementById("modal-visor-img").classList.remove("hidden");
+            document.getElementById("modal-visor-img").classList.add("flex");
+        }
+
+        window.cerrarVisorImg = function() {
+            document.getElementById("modal-visor-img").classList.remove("flex");
+            document.getElementById("modal-visor-img").classList.add("hidden");
+        }
+
+        window.abrirModalTermoNuevo = function() {
+            document.getElementById("termo-modal-titulo").innerText = "Nueva Inspección Termográfica";
+            document.getElementById("termo-id").value = "";
+            document.getElementById("termo-tablero").value = "";
+            document.getElementById("termo-columna").value = "";
+            document.getElementById("termo-equipo").value = "";
+            document.getElementById("termo-temp").value = "";
+            document.getElementById("termo-foto").value = "";
+            document.getElementById("termo-obs").value = "";
+            document.getElementById("fase-r").checked = false;
+            document.getElementById("fase-s").checked = false;
+            document.getElementById("fase-t").checked = false;
+            imagenBase64Temporal = "";
+            document.getElementById("contenedor-preview").classList.add("hidden");
+            document.getElementById("modal-termo").classList.remove("hidden");
+            document.getElementById("modal-termo").classList.add("flex");
+        }
+
+        window.abrirModalTermoEditar = function(id) {
+            const t = listaTermografias.find(item => item.id === id);
+            if (!t) return;
+            document.getElementById("termo-modal-titulo").innerText = "Editar Inspección Termográfica";
+            document.getElementById("termo-id").value = t.id;
+            document.getElementById("termo-tablero").value = t.tablero || "";
+            document.getElementById("termo-columna").value = t.columna || "";
+            document.getElementById("termo-equipo").value = t.equipo || "";
+            document.getElementById("termo-temp").value = t.temp || "";
+            document.getElementById("termo-foto").value = t.foto || "";
+            document.getElementById("termo-obs").value = t.observaciones || "";
+            
+            const fases = t.fases || { r: false, s: false, t: false };
+            document.getElementById("fase-r").checked = fases.r;
+            document.getElementById("fase-s").checked = fases.s;
+            document.getElementById("fase-t").checked = fases.t;
+
+            imagenBase64Temporal = t.imagen || "";
+            if (imagenBase64Temporal) {
+                document.getElementById("img-preview").src = imagenBase64Temporal;
+                document.getElementById("contenedor-preview").classList.remove("hidden");
+            }
+            document.getElementById("modal-termo").classList.remove("hidden");
+            document.getElementById("modal-termo").classList.add("flex");
+        }
+
+        window.cerrarModalTermo = function() {
+            document.getElementById("modal-termo").classList.remove("flex");
+            document.getElementById("modal-termo").classList.add("hidden");
+        }
+
+        window.filtrarEquipos = function() {
+            const texto = document.getElementById("input-busqueda").value.toLowerCase();
+            const ccmFiltro = document.getElementById("filtro-ccm").value;
+            
+            const filtrados = listaEquipos.filter(eq => {
+                const matchTexto = (eq.tag || '').toLowerCase().includes(texto) ||
+                                   (eq.cubicle || '').toLowerCase().includes(texto) ||
+                                   (eq.ccm || '').toLowerCase().includes(texto) ||
+                                   (eq.potencia || '').toLowerCase().includes(texto);
+                const matchCcm = ccmFiltro === "" || eq.ccm === ccmFiltro;
+                return matchTexto && matchCcm;
+            });
+            renderizarTablaCCM(filtrados);
+        }
+
+        window.filtrarTermografia = function() {
+            const texto = document.getElementById("termo-busqueda").value.toLowerCase();
+            const filtrados = listaTermografias.filter(t => {
+                return (t.tablero || '').toLowerCase().includes(texto) ||
+                       (t.columna || '').toLowerCase().includes(texto) ||
+                       (t.equipo || '').toLowerCase().includes(texto) ||
+                       (t.observaciones || '').toLowerCase().includes(texto);
+            });
+            renderizarTablaTermografia(filtrados);
+        }
+
+        window.poblarFiltros = function() {
+            const select = document.getElementById("filtro-ccm");
+            if (!select) return;
+            const ccms = [...new Set(listaEquipos.map(eq => eq.ccm).filter(Boolean))];
+            select.innerHTML = `<option value="">Todos los CCM</option>` + ccms.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+
+        window.onload = function() {
+            cargarDatosGenerales();
+        };
+    </script>
+</body>
+</html>

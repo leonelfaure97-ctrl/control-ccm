@@ -428,13 +428,23 @@
             }
         }
 
-        // CARGA ROBUSTA CON FORZADO DE MODO LOCAL SI LA NUBE TARDÁ MÁS DE 2 SEGUNDOS
+        // CARGA ROBUSTA CON PERSISTENCIA LOCAL OFFLINE AUTOMÁTICA
         window.cargarDatosGenerales = async function() {
             const syncStatus = document.getElementById("sync-status");
             if (syncStatus) {
                 syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span> Conectando...`;
             }
             
+            // Intentamos recuperar primero lo que esté guardado localmente para que no aparezca vacío
+            const localEquipos = localStorage.getItem("ccm_equipos_offline");
+            if (localEquipos) {
+                try {
+                    listaEquipos = JSON.parse(localEquipos);
+                    poblarFiltros();
+                    renderizarTablaCCM(listaEquipos);
+                } catch(e) { console.error(e); }
+            }
+
             let conexionExitosa = false;
             const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve("timeout"), 2000));
 
@@ -443,6 +453,8 @@
                     const snapCcm = await getDocs(collection(db, "equipos_ccm"));
                     listaEquipos = [];
                     snapCcm.forEach(d => listaEquipos.push({ id: d.id, ...d.data() }));
+                    // Guardamos copia fresca en localStorage para futuras visitas sin señal
+                    localStorage.setItem("ccm_equipos_offline", JSON.stringify(listaEquipos));
                     conexionExitosa = true;
                 };
 
@@ -452,13 +464,13 @@
                     throw new Error("Timeout alcanzado");
                 }
 
-                if (typeof poblarFiltros === 'function') poblarFiltros();
+                poblarFiltros();
                 renderizarTablaCCM(listaEquipos);
                 if (syncStatus) {
                     syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado a la Nube`;
                 }
             } catch (err) {
-                console.warn("Operando en modo local por red lenta o bloqueada:", err);
+                console.warn("Operando en modo local por red lenta o sin señal:", err);
                 if (syncStatus) {
                     syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local Activo`;
                 }
@@ -467,35 +479,49 @@
         }
 
         window.cargarTermografiasNube = async function() {
+            const localTermo = localStorage.getItem("ccm_termografias_offline");
+            if (localTermo) {
+                try {
+                    listaTermografias = JSON.parse(localTermo);
+                    renderizarTablaTermografia(listaTermografias);
+                } catch(e) { console.error(e); }
+            }
+
             const timeout = new Promise((_, reject) => setTimeout(() => reject(new Error("Timeout")), 2000));
             try {
                 const fetchTask = async () => {
                     const snapTermo = await getDocs(collection(db, "termografias"));
                     listaTermografias = [];
                     snapTermo.forEach(d => listaTermografias.push({ id: d.id, ...d.data() }));
+                    localStorage.setItem("ccm_termografias_offline", JSON.stringify(listaTermografias));
                 };
                 await Promise.race([fetchTask(), timeout]);
                 renderizarTablaTermografia(listaTermografias);
             } catch (err) {
-                console.warn("Termografías en modo local");
+                console.warn("Termografías en modo local (sin conexión)");
                 renderizarTablaTermografia(listaTermografias);
             }
         }
 
         window.cargarNotasHistorialNube = async function() {
+            const localNotas = localStorage.getItem("ccm_notas_offline");
+            if (localNotas) {
+                try { listaNotasHistorial = JSON.parse(localNotas); } catch(e) {}
+            }
             try {
                 const snap = await getDocs(collection(db, "historial_equipos"));
                 listaNotasHistorial = [];
                 snap.forEach(d => listaNotasHistorial.push({ id: d.id, ...d.data() }));
+                localStorage.setItem("ccm_notas_offline", JSON.stringify(listaNotasHistorial));
             } catch (err) {
-                console.warn("Notas de historial en modo local o sin conexión");
+                console.warn("Notas de historial en modo local");
             }
         }
 
         function renderizarTablaCCM(equipos) {
             const tbody = document.getElementById("tabla-equipos");
             if (equipos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No hay equipos registrados. Podés cargar un Excel o agregar uno nuevo.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No hay equipos registrados o no hay conexión disponible.</td></tr>`;
                 return;
             }
             tbody.innerHTML = equipos.map(eq => `
@@ -520,7 +546,7 @@
         function renderizarTablaTermografia(termos) {
             const tbody = document.getElementById("tabla-termografia");
             if (termos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400">No hay registros termográficos cargados.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400">No hay registros termográficos cargados o sin conexión.</td></tr>`;
                 return;
             }
             tbody.innerHTML = termos.map(t => {
@@ -738,7 +764,7 @@
                 verHistorialEquipo(tagEquipoActualHistorial, "");
             } catch (err) {
                 console.error("Error al guardar nota en Firebase:", err);
-                alert("No se pudo guardar en la nube.");
+                alert("No se pudo guardar en la nube (sin conexión).");
             }
         }
 
@@ -936,7 +962,7 @@
             const select = document.getElementById("filtro-ccm");
             if (!select) return;
             const ccms = [...new Set(listaEquipos.map(eq => eq.ccm).filter(Boolean))];
-            select.innerHTML = `<option value="">Todos los CCM</option>` + ccms.map(c => `<option value="${c}">${c}</option>`).join('');
+            select.innerHTML = `<option value="">Todos los CCM</option>` + ccms.px-3.map ? ccms.map(c => `<option value="${c}">${c}</option>`).join('') : ccms.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         window.onload = function() {

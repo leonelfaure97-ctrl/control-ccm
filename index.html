@@ -63,8 +63,8 @@
 
         <!-- BOTONERA SUPERIOR Y CAMBIO DE VISTA -->
         <div class="flex items-center gap-3 flex-wrap justify-end">
-            <span id="sync-status" class="flex items-center gap-2 text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1.5 rounded-full font-medium">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Conectando...
+            <span id="sync-status" class="flex items-center gap-2 text-xs bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-full font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local / Offline
             </span>
 
             <button onclick="cambiarVista('ccm')" id="btn-vista-ccm" class="bg-blue-600 text-white font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2">
@@ -125,7 +125,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-equipos" class="divide-y divide-slate-700/50 text-sm">
-                        <tr><td colspan="7" class="text-center py-8 text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando información...</td></tr>
+                        <tr><td colspan="7" class="text-center py-8 text-slate-400">Cargando equipos...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -425,11 +425,11 @@
             }
         }
 
-        // CARGA ULTRA INMEDIATA Y CONTROL DE NUBE A PRUEBA DE BLOQUEOS DE RED
+        // ARRANQUE 100% LOCAL E INSTANTÁNEO (SIN BLOQUEOS DE RED)
         window.cargarDatosGenerales = function() {
             const syncStatus = document.getElementById("sync-status");
-            
-            // 1. CARGA LOCAL INMEDIATA
+
+            // 1. Cargamos de inmediato de la memoria interna del celular o PC
             const localEquipos = localStorage.getItem("ccm_equipos_offline");
             if (localEquipos) {
                 try {
@@ -437,24 +437,13 @@
                     poblarFiltros();
                     renderizarTablaCCM(listaEquipos);
                 } catch(e) { console.error(e); }
+            } else {
+                renderizarTablaCCM([]);
             }
 
-            // 2. CRONÓMETRO DE CONTROL (1.2 SEGUNDOS MÁXIMO)
-            let respondioNube = false;
-            const timer = setTimeout(() => {
-                if (!respondioNube) {
-                    if (syncStatus) {
-                        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local Activo`;
-                    }
-                    renderizarTablaCCM(listaEquipos);
-                }
-            }, 1200);
-
-            // 3. INTENTO DE CONSULTA A FIREBASE
+            // 2. Intentamos sincronizar con la nube en segundo plano de manera silenciosa
             getDocs(collection(db, "equipos_ccm"))
                 .then(snapCcm => {
-                    respondioNube = true;
-                    clearTimeout(timer);
                     listaEquipos = [];
                     snapCcm.forEach(d => listaEquipos.push({ id: d.id, ...d.data() }));
                     
@@ -467,13 +456,7 @@
                     }
                 })
                 .catch(err => {
-                    respondioNube = true;
-                    clearTimeout(timer);
-                    console.warn("Conexión en Modo Local:", err);
-                    if (syncStatus) {
-                        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local Activo`;
-                    }
-                    renderizarTablaCCM(listaEquipos);
+                    console.warn("Sin conexión a la nube, operando localmente.", err);
                 });
         }
 
@@ -484,57 +467,21 @@
                     listaTermografias = JSON.parse(localTermo);
                     renderizarTablaTermografia(listaTermografias);
                 } catch(e) { console.error(e); }
+            } else {
+                renderizarTablaTermografia([]);
             }
-
-            let respondio = false;
-            const timer = setTimeout(() => {
-                if (!respondio) renderizarTablaTermografia(listaTermografias);
-            }, 1200);
 
             getDocs(collection(db, "termografias"))
                 .then(snapTermo => {
-                    respondio = true;
-                    clearTimeout(timer);
                     listaTermografias = [];
                     snapTermo.forEach(d => listaTermografias.push({ id: d.id, ...d.data() }));
                     localStorage.setItem("ccm_termografias_offline", JSON.stringify(listaTermografias));
                     renderizarTablaTermografia(listaTermografias);
                 })
-                .catch(() => {
-                    respondio = true;
-                    clearTimeout(timer);
-                    renderizarTablaTermografia(listaTermografias);
-                });
+                .catch(() => {});
         }
 
         window.cargarNotasHistorialNube = function() {
             const localNotas = localStorage.getItem("ccm_notas_offline");
             if (localNotas) {
-                try { listaNotasHistorial = JSON.parse(localNotas); } catch(e) {}
-            }
-            getDocs(collection(db, "historial_equipos"))
-                .then(snap => {
-                    listaNotasHistorial = [];
-                    snap.forEach(d => listaNotasHistorial.push({ id: d.id, ...d.data() }));
-                    localStorage.setItem("ccm_notas_offline", JSON.stringify(listaNotasHistorial));
-                })
-                .catch(err => console.warn("Notas en modo local:", err));
-        }
-
-        function renderizarTablaCCM(equipos) {
-            const tbody = document.getElementById("tabla-equipos");
-            if (!tbody) return;
-            if (equipos.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No hay equipos registrados en memoria ni conexión.</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = equipos.map(eq => `
-                <tr class="hover:bg-slate-700/30 transition cursor-pointer" onclick="verDetalleEquipo('\${eq.id}')">
-                    <td class="py-3 px-4 font-semibold text-green-400" data-label="Tag / Equipo:">
-                        <span class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-circle-chevron-right text-xs text-slate-500"></i> \${eq.tag || ''}</span>
-                    </td>
-                    <td class="py-3 px-4" data-label="Cubicle:">\${eq.cubicle || ''}</td>
-                    <td class="py-3 px-4" data-label="CCM:">\${eq.ccm || ''}</td>
-                    <td class="py-3 px-4" data-label="Potencia:">\${eq.potencia || ''}</td>
-                    <td class="py-3 px-4" data-label="I. Nom:">\${eq.inominal || ''}</td>
-                    <td class="py-3 px-4" data-label="Arranque:"><span class="bg-slate-700/50 text-
+                try { listaNotasHistorial = JSON.parse(localNotas); } catch(

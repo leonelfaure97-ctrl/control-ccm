@@ -125,7 +125,7 @@
                         </tr>
                     </thead>
                     <tbody id="tabla-equipos" class="divide-y divide-slate-700/50 text-sm">
-                        <tr><td colspan="7" class="text-center py-8 text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Conectando con la base de datos...</td></tr>
+                        <tr><td colspan="7" class="text-center py-8 text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Cargando información...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -288,15 +288,12 @@
             </div>
             
             <div class="p-6 overflow-y-auto space-y-4 flex-1 text-sm">
-                <!-- Botón para agregar nota general al equipo -->
                 <div class="flex justify-between items-center bg-slate-900/80 p-3 rounded-xl border border-slate-700">
                     <span class="text-xs text-slate-300"><i class="fa-solid fa-info-circle text-blue-400 mr-1"></i> Bitácora completa de mantenimiento.</span>
                     <button onclick="abrirModalNuevaNotaHistorial()" class="bg-[#1E7333] hover:bg-green-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs transition flex items-center gap-1.5 shadow">
                         <i class="fa-solid fa-plus"></i> Nueva Nota / Reparación
                     </button>
                 </div>
-
-                <!-- Contenedor donde se listan intervenciones y termografías -->
                 <div id="contenido-historial" class="space-y-3">
                     <!-- Se puebla dinámicamente -->
                 </div>
@@ -341,4 +338,203 @@
                 <input type="hidden" id="nota-tag-equipo">
                 <div>
                     <label class="block text-xs font-medium text-slate-400 mb-1">Fecha *</label>
-                    <input type="date" id="nota-fecha" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py
+                    <input type="date" id="nota-fecha" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Título / Tipo de Evento *</label>
+                    <input type="text" id="nota-titulo" placeholder="ej: Reparación de motor / Bobinado / Cambio de rodamientos" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Descripción / Detalles *</label>
+                    <textarea id="nota-detalle" rows="3" placeholder="ej: Se envió a taller por vibración elevada. Se reemplazaron rulemanes lado libre y acople." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100 focus:border-green-500 focus:outline-none"></textarea>
+                </div>
+            </div>
+            <div class="px-5 py-3 border-t border-slate-700 flex justify-end gap-2 bg-slate-900/50">
+                <button onclick="cerrarModalNotaHistorial()" class="px-3 py-1.5 rounded-lg text-xs bg-slate-700 hover:bg-slate-600">Cancelar</button>
+                <button onclick="guardarNotaHistorial()" class="px-3 py-1.5 rounded-lg text-xs bg-[#1E7333] hover:bg-green-700 text-white font-semibold">Guardar Nota</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA VER IMAGEN GRANDE -->
+    <div id="modal-visor-img" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden justify-center items-center p-4 z-50" onclick="cerrarVisorImg()">
+        <div class="relative max-w-4xl max-h-[90vh]">
+            <button class="absolute -top-10 right-0 text-white text-2xl hover:text-amber-400"><i class="fa-solid fa-xmark"></i></button>
+            <img id="img-visor-grande" src="" alt="Termografía Ampliada" class="max-w-full max-h-[85vh] rounded-lg border border-slate-700 shadow-2xl object-contain">
+        </div>
+    </div>
+
+    <!-- SCRIPT DE FIREBASE Y LÓGICA -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { 
+            getFirestore, 
+            collection, 
+            addDoc, 
+            doc, 
+            updateDoc, 
+            deleteDoc, 
+            getDocs 
+        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDi_vtxaFeAPeBoe2cupyrKIChrmKX-2RU",
+            authDomain: "control-ccm.firebaseapp.com",
+            databaseURL: "https://control-ccm-default-rtdb.firebaseio.com",
+            projectId: "control-ccm",
+            storageBucket: "control-ccm.firebasestorage.app",
+            messagingSenderId: "14150602796",
+            appId: "1:14150602796:web:649438a05f51a0c6ecc189"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let listaEquipos = [];
+        let listaTermografias = [];
+        let listaNotasHistorial = [];
+        let tagEquipoActualHistorial = "";
+        let imagenBase64Temporal = "";
+
+        window.cambiarVista = function(vista) {
+            const vCcm = document.getElementById("vista-ccm");
+            const vTermo = document.getElementById("vista-termografia");
+            const btnCcm = document.getElementById("btn-vista-ccm");
+            const btnTermo = document.getElementById("btn-vista-termo");
+            const actCcm = document.getElementById("acciones-ccm");
+            const actTermo = document.getElementById("acciones-termo");
+            const titulo = document.getElementById("titulo-sistema");
+
+            if (vista === 'ccm') {
+                vCcm.classList.remove("hidden");
+                vTermo.classList.add("hidden");
+                btnCcm.className = "bg-blue-600 text-white font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2";
+                btnTermo.className = "bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2 border border-slate-700";
+                actCcm.classList.remove("hidden");
+                actTermo.classList.add("hidden");
+                titulo.innerText = "Gestión de Cubicles y CCM";
+            } else {
+                vCcm.classList.add("hidden");
+                vTermo.classList.remove("hidden");
+                btnTermo.className = "bg-amber-600 text-white font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2";
+                btnCcm.className = "bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2 border border-slate-700";
+                actCcm.classList.add("hidden");
+                actTermo.classList.remove("hidden");
+                titulo.innerText = "Módulo de Inspección Termográfica";
+                cargarTermografiasNube();
+            }
+        }
+
+        // CARGA ULTRA INMEDIATA Y CONTROL DE NUBE A PRUEBA DE BLOQUEOS DE RED
+        window.cargarDatosGenerales = function() {
+            const syncStatus = document.getElementById("sync-status");
+            
+            // 1. CARGA LOCAL INMEDIATA
+            const localEquipos = localStorage.getItem("ccm_equipos_offline");
+            if (localEquipos) {
+                try {
+                    listaEquipos = JSON.parse(localEquipos);
+                    poblarFiltros();
+                    renderizarTablaCCM(listaEquipos);
+                } catch(e) { console.error(e); }
+            }
+
+            // 2. CRONÓMETRO DE CONTROL (1.2 SEGUNDOS MÁXIMO)
+            let respondioNube = false;
+            const timer = setTimeout(() => {
+                if (!respondioNube) {
+                    if (syncStatus) {
+                        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local Activo`;
+                    }
+                    renderizarTablaCCM(listaEquipos);
+                }
+            }, 1200);
+
+            // 3. INTENTO DE CONSULTA A FIREBASE
+            getDocs(collection(db, "equipos_ccm"))
+                .then(snapCcm => {
+                    respondioNube = true;
+                    clearTimeout(timer);
+                    listaEquipos = [];
+                    snapCcm.forEach(d => listaEquipos.push({ id: d.id, ...d.data() }));
+                    
+                    localStorage.setItem("ccm_equipos_offline", JSON.stringify(listaEquipos));
+                    poblarFiltros();
+                    renderizarTablaCCM(listaEquipos);
+                    
+                    if (syncStatus) {
+                        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado a la Nube`;
+                    }
+                })
+                .catch(err => {
+                    respondioNube = true;
+                    clearTimeout(timer);
+                    console.warn("Conexión en Modo Local:", err);
+                    if (syncStatus) {
+                        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local Activo`;
+                    }
+                    renderizarTablaCCM(listaEquipos);
+                });
+        }
+
+        window.cargarTermografiasNube = function() {
+            const localTermo = localStorage.getItem("ccm_termografias_offline");
+            if (localTermo) {
+                try {
+                    listaTermografias = JSON.parse(localTermo);
+                    renderizarTablaTermografia(listaTermografias);
+                } catch(e) { console.error(e); }
+            }
+
+            let respondio = false;
+            const timer = setTimeout(() => {
+                if (!respondio) renderizarTablaTermografia(listaTermografias);
+            }, 1200);
+
+            getDocs(collection(db, "termografias"))
+                .then(snapTermo => {
+                    respondio = true;
+                    clearTimeout(timer);
+                    listaTermografias = [];
+                    snapTermo.forEach(d => listaTermografias.push({ id: d.id, ...d.data() }));
+                    localStorage.setItem("ccm_termografias_offline", JSON.stringify(listaTermografias));
+                    renderizarTablaTermografia(listaTermografias);
+                })
+                .catch(() => {
+                    respondio = true;
+                    clearTimeout(timer);
+                    renderizarTablaTermografia(listaTermografias);
+                });
+        }
+
+        window.cargarNotasHistorialNube = function() {
+            const localNotas = localStorage.getItem("ccm_notas_offline");
+            if (localNotas) {
+                try { listaNotasHistorial = JSON.parse(localNotas); } catch(e) {}
+            }
+            getDocs(collection(db, "historial_equipos"))
+                .then(snap => {
+                    listaNotasHistorial = [];
+                    snap.forEach(d => listaNotasHistorial.push({ id: d.id, ...d.data() }));
+                    localStorage.setItem("ccm_notas_offline", JSON.stringify(listaNotasHistorial));
+                })
+                .catch(err => console.warn("Notas en modo local:", err));
+        }
+
+        function renderizarTablaCCM(equipos) {
+            const tbody = document.getElementById("tabla-equipos");
+            if (!tbody) return;
+            if (equipos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No hay equipos registrados en memoria ni conexión.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = equipos.map(eq => `
+                <tr class="hover:bg-slate-700/30 transition cursor-pointer" onclick="verDetalleEquipo('\${eq.id}')">
+                    <td class="py-3 px-4 font-semibold text-green-400" data-label="Tag / Equipo:">
+                        <span class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-circle-chevron-right text-xs text-slate-500"></i> \${eq.tag || ''}</span>
+                    </td>
+                    <td class="py-3 px-4" data-label="Cubicle:">\${eq.cubicle || ''}</td>
+                    <td class="py-3 px-4" data-label="CCM:">\${eq.ccm || ''}</td>
+                    <td class="py-3 px-4" data-label="Potencia:">\${eq.potencia || ''}</td>
+                    <td class="py-3 px-4" data-label="I. Nom:">\${eq.inominal || ''}</td>
+                    <td class="py-3 px-4" data-label="Arranque:"><span class="bg-slate-700/50 text-

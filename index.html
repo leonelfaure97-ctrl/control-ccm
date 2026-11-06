@@ -63,8 +63,8 @@
 
         <!-- BOTONERA SUPERIOR Y CAMBIO DE VISTA -->
         <div class="flex items-center gap-3 flex-wrap justify-end">
-            <span id="sync-status" class="flex items-center gap-2 text-xs bg-slate-800 text-slate-300 border border-slate-700 px-3 py-1.5 rounded-full font-medium">
-                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local / Offline
+            <span id="sync-status" class="flex items-center gap-2 text-xs bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1.5 rounded-full font-medium">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Modo Local Activo
             </span>
 
             <button onclick="cambiarVista('ccm')" id="btn-vista-ccm" class="bg-blue-600 text-white font-semibold px-3 py-2 rounded-lg text-sm transition shadow flex items-center gap-2">
@@ -364,32 +364,8 @@
         </div>
     </div>
 
-    <!-- SCRIPT DE FIREBASE Y LÓGICA -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { 
-            getFirestore, 
-            collection, 
-            addDoc, 
-            doc, 
-            updateDoc, 
-            deleteDoc, 
-            getDocs 
-        } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDi_vtxaFeAPeBoe2cupyrKIChrmKX-2RU",
-            authDomain: "control-ccm.firebaseapp.com",
-            databaseURL: "https://control-ccm-default-rtdb.firebaseio.com",
-            projectId: "control-ccm",
-            storageBucket: "control-ccm.firebasestorage.app",
-            messagingSenderId: "14150602796",
-            appId: "1:14150602796:web:649438a05f51a0c6ecc189"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
+    <!-- LÓGICA 100% LOCAL Y ROBUSTA (SIN BLOQUEOS DE RED) -->
+    <script>
         let listaEquipos = [];
         let listaTermografias = [];
         let listaNotasHistorial = [];
@@ -421,67 +397,170 @@
                 actCcm.classList.add("hidden");
                 actTermo.classList.remove("hidden");
                 titulo.innerText = "Módulo de Inspección Termográfica";
-                cargarTermografiasNube();
+                renderizarTablaTermografia(listaTermografias);
             }
         }
 
-        // ARRANQUE 100% LOCAL E INSTANTÁNEO (SIN BLOQUEOS DE RED)
+        // CARGA INSTANTÁNEA DESDE EL DISPOSITIVO
         window.cargarDatosGenerales = function() {
-            const syncStatus = document.getElementById("sync-status");
-
-            // 1. Cargamos de inmediato de la memoria interna del celular o PC
             const localEquipos = localStorage.getItem("ccm_equipos_offline");
             if (localEquipos) {
                 try {
                     listaEquipos = JSON.parse(localEquipos);
-                    poblarFiltros();
-                    renderizarTablaCCM(listaEquipos);
-                } catch(e) { console.error(e); }
-            } else {
-                renderizarTablaCCM([]);
+                } catch(e) { listaEquipos = []; }
             }
 
-            // 2. Intentamos sincronizar con la nube en segundo plano de manera silenciosa
-            getDocs(collection(db, "equipos_ccm"))
-                .then(snapCcm => {
-                    listaEquipos = [];
-                    snapCcm.forEach(d => listaEquipos.push({ id: d.id, ...d.data() }));
-                    
-                    localStorage.setItem("ccm_equipos_offline", JSON.stringify(listaEquipos));
-                    poblarFiltros();
-                    renderizarTablaCCM(listaEquipos);
-                    
-                    if (syncStatus) {
-                        syncStatus.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-500"></span> Conectado a la Nube`;
-                    }
-                })
-                .catch(err => {
-                    console.warn("Sin conexión a la nube, operando localmente.", err);
-                });
-        }
-
-        window.cargarTermografiasNube = function() {
             const localTermo = localStorage.getItem("ccm_termografias_offline");
             if (localTermo) {
                 try {
                     listaTermografias = JSON.parse(localTermo);
-                    renderizarTablaTermografia(listaTermografias);
-                } catch(e) { console.error(e); }
-            } else {
-                renderizarTablaTermografia([]);
+                } catch(e) { listaTermografias = []; }
             }
 
-            getDocs(collection(db, "termografias"))
-                .then(snapTermo => {
-                    listaTermografias = [];
-                    snapTermo.forEach(d => listaTermografias.push({ id: d.id, ...d.data() }));
-                    localStorage.setItem("ccm_termografias_offline", JSON.stringify(listaTermografias));
-                    renderizarTablaTermografia(listaTermografias);
-                })
-                .catch(() => {});
-        }
-
-        window.cargarNotasHistorialNube = function() {
             const localNotas = localStorage.getItem("ccm_notas_offline");
             if (localNotas) {
-                try { listaNotasHistorial = JSON.parse(localNotas); } catch(
+                try {
+                    listaNotasHistorial = JSON.parse(localNotas);
+                } catch(e) { listaNotasHistorial = []; }
+            }
+
+            poblarFiltros();
+            renderizarTablaCCM(listaEquipos);
+        }
+
+        function renderizarTablaCCM(equipos) {
+            const tbody = document.getElementById("tabla-equipos");
+            if (!tbody) return;
+            if (equipos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-8 text-slate-400">No hay equipos registrados. Podés cargar un archivo Excel desde la barra superior o crear uno nuevo.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = equipos.map(eq => `
+                <tr class="hover:bg-slate-700/30 transition cursor-pointer" onclick="verDetalleEquipo('${eq.id || eq.tag}')">
+                    <td class="py-3 px-4 font-semibold text-green-400" data-label="Tag / Equipo:">
+                        <span class="hover:underline flex items-center gap-1.5"><i class="fa-solid fa-circle-chevron-right text-xs text-slate-500"></i> ${eq.tag || ''}</span>
+                    </td>
+                    <td class="py-3 px-4" data-label="Cubicle:">${eq.cubicle || ''}</td>
+                    <td class="py-3 px-4" data-label="CCM:">${eq.ccm || ''}</td>
+                    <td class="py-3 px-4" data-label="Potencia:">${eq.potencia || ''}</td>
+                    <td class="py-3 px-4" data-label="I. Nom:">${eq.inominal || ''}</td>
+                    <td class="py-3 px-4" data-label="Arranque:"><span class="bg-slate-700/50 text-slate-300 px-2.5 py-1 rounded-md text-xs">${eq.arranque || ''}</span></td>
+                    <td class="py-3 px-4 text-center flex justify-center gap-1.5 flex-wrap" onclick="event.stopPropagation()">
+                        <button onclick="verHistorialEquipo('${eq.tag}', '${eq.cubicle}')" class="bg-slate-700 hover:bg-slate-600 text-blue-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Ver Historial"><i class="fa-solid fa-clock-rotate-left"></i> Historial</button>
+                        <button onclick="editarEquipo('${eq.id || eq.tag}')" class="bg-slate-700 hover:bg-slate-600 text-green-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Editar"><i class="fa-solid fa-pen"></i> Editar</button>
+                        <button onclick="eliminarEquipo('${eq.id || eq.tag}')" class="bg-slate-700 hover:bg-slate-600 text-red-400 px-2.5 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1" title="Eliminar"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderizarTablaTermografia(termos) {
+            const tbody = document.getElementById("tabla-termografia");
+            if (!tbody) return;
+            if (termos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-8 text-slate-400">No hay registros termográficos cargados.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = termos.map(t => {
+                const fases = t.fases || { r: false, s: false, t: false };
+                const clsR = fases.r ? "bg-emerald-600 text-white font-bold shadow" : "bg-slate-800 text-slate-500";
+                const clsS = fases.s ? "bg-emerald-600 text-white font-bold shadow" : "bg-slate-800 text-slate-500";
+                const clsT = fases.t ? "bg-emerald-600 text-white font-bold shadow" : "bg-slate-800 text-slate-500";
+
+                let btnImg = `<span class="text-xs text-slate-500 italic">Sin imagen</span>`;
+                if (t.imagen) {
+                    btnImg = `<button onclick="verImagenGrande('${t.imagen}')" class="bg-slate-700 hover:bg-slate-600 text-amber-300 px-2.5 py-1 rounded text-xs inline-flex items-center gap-1"><i class="fa-solid fa-image"></i> Ver Foto</button>`;
+                }
+
+                return `
+                    <tr class="hover:bg-slate-700/30 transition">
+                        <td class="py-3 px-4 font-semibold text-amber-400">${t.tablero || ''}</td>
+                        <td class="py-3 px-4">${t.columna || ''}</td>
+                        <td class="py-3 px-4 font-medium text-slate-200">${t.equipo || ''}</td>
+                        <td class="py-3 px-4 text-center">
+                            <div class="inline-flex gap-1 bg-slate-900 border border-slate-700 px-2 py-1 rounded text-xs font-mono">
+                                <span class="px-1.5 py-0.5 rounded ${clsR}">R</span>
+                                <span class="px-1.5 py-0.5 rounded ${clsS}">S</span>
+                                <span class="px-1.5 py-0.5 rounded ${clsT}">T</span>
+                            </div>
+                        </td>
+                        <td class="py-3 px-4 font-bold text-slate-100">${t.temp || '-'}</td>
+                        <td class="py-3 px-4 text-slate-300 font-mono text-xs">${t.foto || '-'}</td>
+                        <td class="py-3 px-4 text-slate-300 text-xs">${t.observaciones || '-'}</td>
+                        <td class="py-3 px-4 text-center">${btnImg}</td>
+                        <td class="py-3 px-4 text-center flex justify-center gap-1">
+                            <button onclick="abrirModalTermoEditar('${t.id || t.foto}')" class="text-slate-400 hover:text-amber-400 p-1.5" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button onclick="eliminarTermografia('${t.id || t.foto}')" class="text-slate-400 hover:text-red-400 p-1.5" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.verDetalleEquipo = function(idTag) {
+            const eq = listaEquipos.find(item => (item.id || item.tag) === idTag);
+            if (!eq) return;
+
+            const contenedor = document.getElementById("contenido-detalle-equipo");
+            const titulo = document.getElementById("detalle-titulo");
+
+            titulo.innerHTML = `<i class="fa-solid fa-bolt text-green-400 mr-2"></i> Tag: ${eq.tag || 'Sin Tag'}`;
+
+            contenedor.innerHTML = `
+                <div class="grid grid-cols-2 gap-3 bg-slate-900 p-4 rounded-xl border border-slate-700">
+                    <div><span class="text-slate-400 text-xs block">Cubicle:</span> <strong class="text-slate-100">${eq.cubicle || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">CCM:</span> <strong class="text-slate-100">${eq.ccm || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Sector / Área:</span> <strong class="text-slate-100">${eq.sector || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Tipo de Arranque:</span> <strong class="text-slate-100">${eq.arranque || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Potencia:</span> <strong class="text-slate-100">${eq.potencia || '-'}</strong></div>
+                    <div><span class="text-slate-400 text-xs block">Corriente Nominal:</span> <strong class="text-slate-100">${eq.inominal || '-'}</strong></div>
+                </div>
+
+                <div class="bg-amber-950/40 border border-amber-800/60 p-4 rounded-xl space-y-2">
+                    <div class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i class="fa-solid fa-bolt-lightning"></i> Especificación de Fusibles
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 pt-1">
+                        <div><span class="text-amber-200/70 text-xs block">Tipo / Tamaño:</span> <span class="font-semibold text-slate-100">${eq.fusibleTipo || 'No especificado'}</span></div>
+                        <div><span class="text-amber-200/70 text-xs block">Calibre / Corriente:</span> <span class="font-semibold text-slate-100">${eq.fusibleAmp || 'No especificado'}</span></div>
+                    </div>
+                </div>
+
+                ${eq.notas ? `
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-700">
+                        <span class="text-slate-400 text-xs block mb-1">Notas generales:</span>
+                        <p class="text-xs text-slate-300 italic">\${eq.notas}</p>
+                    </div>
+                ` : ''}
+            `;
+
+            const modal = document.getElementById("modal-detalle-equipo");
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+
+        window.cerrarModalDetalle = function() {
+            const modal = document.getElementById("modal-detalle-equipo");
+            modal.classList.remove("flex");
+            modal.classList.add("hidden");
+        }
+
+        window.verHistorialEquipo = function(tag, cubicle) {
+            tagEquipoActualHistorial = (tag || '').trim();
+            const titulo = document.getElementById("historial-titulo");
+            const contenedor = document.getElementById("contenido-historial");
+            
+            titulo.innerHTML = `<i class="fa-solid fa-clock-rotate-left mr-2"></i> Historial: <span class="text-green-400">${tag || 'Sin Tag'}</span> (${cubicle || 'Sin Cubicle'})`;
+            
+            const tagBusqueda = tagEquipoActualHistorial.toLowerCase();
+            const cubicleBusqueda = (cubicle || '').toLowerCase().trim();
+
+            const termosFiltrados = listaTermografias.filter(t => {
+                const eq = (t.equipo || '').toLowerCase();
+                const col = (t.columna || '').toLowerCase();
+                const tab = (t.tablero || '').toLowerCase();
+                return (tagBusqueda && (eq.includes(tagBusqueda) || col.includes(tagBusqueda) || tab.includes(tagBusqueda))) ||
+                       (cubicleBusqueda && (col.includes(cubicleBusqueda) || tab.includes(cubicleBusqueda)));
+            });
+
+            const notas

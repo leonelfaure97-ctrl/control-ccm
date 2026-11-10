@@ -53,6 +53,7 @@ const db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:pe
 const col=n=>collection(db,n),$=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const fmtT=v=>{v=String(v??'').trim();return /^[\d.,]+$/.test(v)?v+' °C':v};
 const S={equipos:[],termos:[],notas:[]};let vista='ccm',cur=null,fichaId=null,tmpImg='',un=[];
 const fail=e=>{console.error(e);alert('No se pudo guardar: '+e.message)};
 const inp='w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm';
@@ -80,7 +81,7 @@ function render(){
  }else{
   const l=S.termos.filter(t=>norm([t.tablero,t.columna,t.equipo,t.observaciones].join(' ')).includes(q)).sort((a,b)=>String(a.tablero).localeCompare(String(b.tablero),'es',{numeric:true}));
   $('#tb-termo').innerHTML=l.length?l.map(t=>{const f=t.fases||{},b=(x,c)=>`<span class="px-1.5 rounded ${f[x]?c+' text-white font-bold':'bg-slate-800 text-slate-500'}">${x.toUpperCase()}</span>`;
-   return `<tr><td data-l="Tablero" class="p-3 font-semibold text-amber-400">${esc(t.tablero)}</td><td data-l="Columna" class="p-3">${esc(t.columna)}</td><td data-l="Equipo" class="p-3">${esc(t.equipo)}</td><td data-l="Fase" class="p-3 text-center font-mono text-xs">${b('r','bg-red-600')} ${b('s','bg-amber-600')} ${b('t','bg-blue-600')}</td><td data-l="Temp" class="p-3 font-bold">${esc(t.temp)||'-'}</td><td data-l="N° foto" class="p-3 font-mono text-xs">${esc(t.foto)||'-'}</td><td data-l="Obs." class="p-3 text-xs">${esc(t.observaciones)||'-'}</td><td data-l="Imagen" class="p-3 text-center">${t.imagen?`<button data-act="img" data-id="${t.id}" class="bg-slate-700 text-amber-300 px-2.5 py-1 rounded text-xs">Ver foto</button>`:'<span class="text-xs text-slate-500">Sin imagen</span>'}</td><td class="p-3 text-center"><button data-act="editT" data-id="${t.id}" class="bg-slate-700 text-amber-400 px-2.5 py-1.5 rounded-lg text-xs">Editar</button> <button data-act="delT" data-id="${t.id}" class="bg-slate-700 text-red-400 px-2.5 py-1.5 rounded-lg text-xs">Eliminar</button></td></tr>`}).join(''):'<tr><td class="p-8 text-center text-slate-400">No hay registros termográficos.</td></tr>';
+   return `<tr><td data-l="Tablero" class="p-3 font-semibold text-amber-400">${esc(t.tablero)}</td><td data-l="Columna" class="p-3">${esc(t.columna)}</td><td data-l="Equipo" class="p-3">${esc(t.equipo)}</td><td data-l="Fase" class="p-3 text-center font-mono text-xs">${b('r','bg-red-600')} ${b('s','bg-amber-600')} ${b('t','bg-blue-600')}</td><td data-l="Temp" class="p-3 font-bold">${esc(fmtT(t.temp))||'-'}</td><td data-l="N° foto" class="p-3 font-mono text-xs">${esc(t.foto)||'-'}</td><td data-l="Obs." class="p-3 text-xs">${esc(t.observaciones)||'-'}</td><td data-l="Imagen" class="p-3 text-center">${t.imagen?`<button data-act="img" data-id="${t.id}" class="bg-slate-700 text-amber-300 px-2.5 py-1 rounded text-xs">Ver foto</button>`:'<span class="text-xs text-slate-500">Sin imagen</span>'}</td><td class="p-3 text-center"><button data-act="editT" data-id="${t.id}" class="bg-slate-700 text-amber-400 px-2.5 py-1.5 rounded-lg text-xs">Editar</button> <button data-act="delT" data-id="${t.id}" class="bg-slate-700 text-red-400 px-2.5 py-1.5 rounded-lg text-xs">Eliminar</button></td></tr>`}).join(''):'<tr><td class="p-8 text-center text-slate-400">No hay registros termográficos.</td></tr>';
  }
  if(fichaId)A.ficha(fichaId);
 }
@@ -103,7 +104,7 @@ const A={
   modal(head('⚡ '+esc(e.tag))+`<div class="grid grid-cols-2 gap-3 bg-slate-900 p-3 rounded-xl text-sm">${k('Cubicle',e.cubicle)}${k('CCM',e.ccm)}${k('Sector',e.sector)}${k('Arranque',e.arranque)}${k('Potencia',e.potencia)}${k('I nominal',e.inominal)}${k('Fusible',e.fusibleTipo)}${k('Calibre fusible',e.fusibleAmp)}</div>${e.notas?`<p class="text-xs italic text-slate-300">${esc(e.notas)}</p>`:''}
   <div class="flex justify-between items-center"><b class="text-sm">Historial</b><button data-act="nota" data-id="${id}" class="bg-[#1E7333] px-3 py-1.5 rounded-lg text-xs">+ Nota / reparación</button></div>`
   +ns.map(n=>`<div class="bg-slate-900 border border-green-900/50 p-3 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b class="text-green-300">🔧 ${esc(n.titulo)}</b><span class="font-mono text-slate-400">${esc(n.fecha)}</span></div><p class="text-slate-300">${esc(n.detalle)}</p><button data-act="delN" data-id="${n.id}" class="text-slate-500 hover:text-red-400">Eliminar nota</button></div>`).join('')
-  +ts.map(t=>{const f=t.fases||{};return `<div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b class="text-amber-400">🌡 ${esc(t.tablero)} / ${esc(t.columna)}</b><span class="font-mono text-amber-300">${esc(t.temp)}</span></div><div>Equipo: ${esc(t.equipo)} · Foto: ${esc(t.foto)||'-'} · Fases: ${['r','s','t'].filter(x=>f[x]).join(' ').toUpperCase()||'-'}</div>${t.observaciones?`<p class="italic text-slate-400">${esc(t.observaciones)}</p>`:''}${t.imagen?`<button data-act="img" data-id="${t.id}" class="text-amber-400 underline">Ver foto</button>`:''}</div>`}).join('')
+  +ts.map(t=>{const f=t.fases||{};return `<div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b class="text-amber-400">🌡 ${esc(t.tablero)} / ${esc(t.columna)}</b><span class="font-mono text-amber-300">${esc(fmtT(t.temp))}</span></div><div>Equipo: ${esc(t.equipo)} · Foto: ${esc(t.foto)||'-'} · Fases: ${['r','s','t'].filter(x=>f[x]).join(' ').toUpperCase()||'-'}</div>${t.observaciones?`<p class="italic text-slate-400">${esc(t.observaciones)}</p>`:''}${t.imagen?`<button data-act="img" data-id="${t.id}" class="text-amber-400 underline">Ver foto</button>`:''}</div>`}).join('')
   +(ns.length||ts.length?'':'<p class="text-center text-slate-400 py-4 text-sm">Sin registros para este equipo todavía.</p>'),'ficha')},
  nota(id){cur=S.equipos.find(x=>x.id===id);fichaId=null;modal(head('Nueva nota / reparación')+`<div><label class="text-xs text-slate-400">Fecha *</label><input id="n_f" type="date" value="${new Date().toISOString().slice(0,10)}" class="${inp}"></div><div><label class="text-xs text-slate-400">Título *</label><input id="n_t" placeholder="Ej: Cambio de rodamientos" class="${inp}"></div><div><label class="text-xs text-slate-400">Detalle *</label><textarea id="n_d" rows="3" class="${inp}"></textarea></div>`+btns('saveN',id,'Guardar nota'))},
  saveN(id){const d={tag:cur.tag,fecha:$('#n_f').value,titulo:$('#n_t').value.trim(),detalle:$('#n_d').value.trim()};if(!d.titulo||!d.detalle)return alert('Completá título y detalle.');
@@ -113,7 +114,7 @@ const A={
   modal(head(id?'Editar inspección':'Nueva inspección','text-amber-400')+'<div class="grid grid-cols-2 gap-3">'+FT.map(x=>field(x,t[x[0]])).join('')+`</div><div class="flex gap-2 text-xs">${['r','s','t'].map(x=>`<label class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-2"><input type="checkbox" id="p_${x}" ${f[x]?'checked':''}> Fase ${x.toUpperCase()}</label>`).join('')}</div><div class="border-t border-slate-700 pt-3"><label class="text-xs text-amber-400">Imagen térmica (FLIR)</label><input id="p_img" type="file" accept="image/*" class="block text-xs mt-1"><img id="p_prev" src="${esc(tmpImg)}" class="${tmpImg?'':'hidden '}mt-2 max-h-40 rounded-lg"></div>`+btns('saveT',id,'Guardar inspección'));
   $('#p_img').onchange=async e=>{const f=e.target.files[0];if(!f)return;let d=await comprimir(f,1000,.65);if(d.length>800000)d=await comprimir(f,700,.5);tmpImg=d;$('#p_prev').src=d;$('#p_prev').classList.remove('hidden')}},
  saveT(id){const d=get(FT);if(!d.tablero||!d.columna||!d.equipo||!d.temp)return alert('Completá Tablero, Columna, Equipo y Temperatura.');
-  d.fases={r:$('#p_r').checked,s:$('#p_s').checked,t:$('#p_t').checked};d.imagen=tmpImg;
+  d.temp=fmtT(d.temp);d.fases={r:$('#p_r').checked,s:$('#p_s').checked,t:$('#p_t').checked};d.imagen=tmpImg;
   (id?updateDoc(doc(db,'termografias',id),d):addDoc(col('termografias'),d)).catch(fail);closeModal()},
  delT(id){if(confirm('¿Eliminar esta inspección?'))deleteDoc(doc(db,'termografias',id)).catch(fail)},
  img(id){const t=S.termos.find(x=>x.id===id);if(t?.imagen){fichaId=null;modal(head('Imagen térmica','text-amber-400')+`<img src="${esc(t.imagen)}" class="max-w-full rounded-lg mx-auto">`)}}
@@ -135,7 +136,7 @@ async function importTermoXlsx(f){
  for(let n=hr+1;n<=ws.rowCount;n++){const row=ws.getRow(n),g=k=>H[k]?row.getCell(H[k]).text.trim():'';
   const d={tablero:g('tablero'),columna:g('columna'),equipo:g('equipo'),foto:g('ndefoto')||g('foto'),observaciones:g('observaciones')};
   if(!d.tablero&&!d.equipo)continue;
-  let tp=g('temp');if(/^[\d.,]+$/.test(tp))tp+=' °C';d.temp=tp;
+  d.temp=fmtT(g('temp'));
   d.fases=fc?{r:verde(row.getCell(fc)),s:verde(row.getCell(fc+1)),t:verde(row.getCell(fc+2))}:{r:false,s:false,t:false};
   const key=norm([d.tablero,d.columna,d.equipo,d.foto].join());if(ex.has(key)){dup++;continue}ex.add(key);
   if(d.fases.r||d.fases.s||d.fases.t)marc++;out.push(d)}
@@ -147,7 +148,7 @@ $('#xl').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)re
   const ccm=vista==='ccm',M=ccm?MC:MT,c=ccm?'equipos_ccm':'termografias',ex=new Set(S.equipos.map(x=>norm(x.tag+x.cubicle))),out=[];
   for(const r of rows){const d={};for(const k in M)d[k]=pick(r,M[k]);
    if(ccm){if(!d.tag)continue;const key=norm(d.tag+d.cubicle);if(ex.has(key))continue;ex.add(key);d.arranque=d.arranque||ARR[0]}
-   else{if(!d.tablero&&!d.equipo)continue;d.fases={r:false,s:false,t:false}}
+   else{if(!d.tablero&&!d.equipo)continue;d.fases={r:false,s:false,t:false};d.temp=fmtT(d.temp)}
    out.push(d)}
   for(let i=0;i<out.length;i+=400){const b=writeBatch(db);out.slice(i,i+400).forEach(d=>b.set(doc(col(c)),d));b.commit().catch(fail)}
   alert(`${out.length} registros cargados de ${rows.length} filas (los duplicados se omiten).`+(ccm?'':'\nCon .xls/.csv no se leen los colores de las fases: guardá la planilla como .xlsx.'))}catch(x){fail(x)}};

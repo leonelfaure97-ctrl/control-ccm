@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // TEMPORAL: acceso abierto, sin login. Cuando se agreguen usuarios,
+    // cambiar "if true" por "if request.auth != null".
+    match /{document=**} {
+      allow read, write: if true;
+    }
+  }
+}

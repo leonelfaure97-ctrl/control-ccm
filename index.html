@@ -12,6 +12,7 @@
 <link rel="icon" href="icons/favicon.png">
 <script src="https://cdn.tailwindcss.com/3.4.17"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
 @media(max-width:768px){thead{display:none}table,tbody,tr,td{display:block;width:100%}tr{margin:0 0 .75rem;background:#1e293b;border:1px solid #334155;border-radius:.75rem;padding:.75rem}td{display:flex;justify-content:space-between;gap:.5rem;text-align:right;padding:.4rem 0;border-bottom:1px solid #33415566}td:before{content:attr(data-l);color:#94a3b8;text-align:left}td:last-child{border:0;justify-content:center;flex-wrap:wrap}td:last-child:before{content:none}}
 </style></head>
@@ -122,17 +123,34 @@ $('#q').oninput=render;$('#fccm').onchange=render;
 
 // Importación desde Excel / CSV
 const MC={tag:['tag','tagequipo','equipo'],cubicle:['cubicle'],ccm:['ccm'],sector:['sector','area','sectorarea'],potencia:['potencia'],inominal:['inominal','inom','corrientenominal','corriente'],arranque:['arranque','tipodearranque'],fusibleTipo:['fusibletipo','tipodefusible','tipodefusibles','fusible'],fusibleAmp:['fusibleamp','calibre','calibrefusible'],notas:['notas']};
-const MT={tablero:['tablero'],columna:['columna'],equipo:['equipo'],temp:['temp','temperatura'],foto:['ndefoto','foto','nfoto','nrofoto'],observaciones:['observaciones','obs'],fases:['fase','fases']};
+const MT={tablero:['tablero'],columna:['columna'],equipo:['equipo'],temp:['temp','temperatura'],foto:['ndefoto','foto','nfoto','nrofoto'],observaciones:['observaciones','obs']};
 const pick=(r,al)=>{for(const k in r)if(al.includes(norm(k)))return String(r[k]).trim();return''};
+// Termografía desde .xlsx: las fases con relleno verde en R, S o T son las marcadas
+function verde(c){const f=c.fill,k=f&&f.type==='pattern'&&f.pattern!=='none'&&f.fgColor;if(!k||!k.argb)return false;const h=k.argb.slice(-6),r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);return g>r+30&&g>b+30}
+async function importTermoXlsx(f){
+ const wb=new ExcelJS.Workbook();await wb.xlsx.load(await f.arrayBuffer());const ws=wb.worksheets[0];let hr=0,H={};
+ ws.eachRow((row,n)=>{if(hr)return;const m={};row.eachCell({includeEmpty:false},(c,i)=>{const k=norm(c.text);if(k&&!(k in m))m[k]=i});if(m.tablero){hr=n;H=m}});
+ if(!hr)throw new Error('No encontré la fila de encabezados (TABLERO, COLUMNA, EQUIPO...).');
+ const fc=H.fase??H.r,ex=new Set(S.termos.map(x=>norm([x.tablero,x.columna,x.equipo,x.foto].join()))),out=[];let marc=0,dup=0;
+ for(let n=hr+1;n<=ws.rowCount;n++){const row=ws.getRow(n),g=k=>H[k]?row.getCell(H[k]).text.trim():'';
+  const d={tablero:g('tablero'),columna:g('columna'),equipo:g('equipo'),foto:g('ndefoto')||g('foto'),observaciones:g('observaciones')};
+  if(!d.tablero&&!d.equipo)continue;
+  let tp=g('temp');if(/^[\d.,]+$/.test(tp))tp+=' °C';d.temp=tp;
+  d.fases=fc?{r:verde(row.getCell(fc)),s:verde(row.getCell(fc+1)),t:verde(row.getCell(fc+2))}:{r:false,s:false,t:false};
+  const key=norm([d.tablero,d.columna,d.equipo,d.foto].join());if(ex.has(key)){dup++;continue}ex.add(key);
+  if(d.fases.r||d.fases.s||d.fases.t)marc++;out.push(d)}
+ for(let i=0;i<out.length;i+=400){const b=writeBatch(db);out.slice(i,i+400).forEach(d=>b.set(doc(col('termografias')),d));b.commit().catch(fail)}
+ alert(`${out.length} inspecciones cargadas, ${marc} con fases marcadas en verde.`+(dup?`\n${dup} repetidas omitidas.`:'')+(out.length&&!marc?'\nNo se detectó ninguna celda verde en R, S o T. Revisá que el color sea un relleno directo de la celda.':''))}
 $('#xl').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;
+ if(vista==='termo'&&/\.xlsx$/i.test(f.name))return importTermoXlsx(f).catch(x=>alert('No se pudo importar: '+x.message));
  try{const wb=XLSX.read(await f.arrayBuffer()),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
   const ccm=vista==='ccm',M=ccm?MC:MT,c=ccm?'equipos_ccm':'termografias',ex=new Set(S.equipos.map(x=>norm(x.tag+x.cubicle))),out=[];
   for(const r of rows){const d={};for(const k in M)d[k]=pick(r,M[k]);
    if(ccm){if(!d.tag)continue;const key=norm(d.tag+d.cubicle);if(ex.has(key))continue;ex.add(key);d.arranque=d.arranque||ARR[0]}
-   else{if(!d.tablero&&!d.equipo)continue;const u=d.fases.toUpperCase(),s=!/[^RST\s,;\/+\-]/.test(u);d.fases={r:s&&u.includes('R'),s:s&&u.includes('S'),t:s&&u.includes('T')}}
+   else{if(!d.tablero&&!d.equipo)continue;d.fases={r:false,s:false,t:false}}
    out.push(d)}
   for(let i=0;i<out.length;i+=400){const b=writeBatch(db);out.slice(i,i+400).forEach(d=>b.set(doc(col(c)),d));b.commit().catch(fail)}
-  alert(`${out.length} registros cargados de ${rows.length} filas (los duplicados se omiten).`)}catch(x){fail(x)}};
+  alert(`${out.length} registros cargados de ${rows.length} filas (los duplicados se omiten).`+(ccm?'':'\nCon .xls/.csv no se leen los colores de las fases: guardá la planilla como .xlsx.'))}catch(x){fail(x)}};
 
 // Datos en tiempo real (sin login por ahora)
 [['equipos_ccm','equipos'],['termografias','termos'],['historial_equipos','notas']].forEach(([c,k])=>onSnapshot(col(c),s=>{S[k]=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(c,e)));

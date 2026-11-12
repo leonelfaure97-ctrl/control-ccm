@@ -1,0 +1,10 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Acceso temporal libre, coherente con la etapa actual sin usuarios.
+    // Antes de habilitar autenticación, reemplazar por reglas basadas en request.auth.
+    match /{allPaths=**} {
+      allow read, write: if true;
+    }
+  }
+}

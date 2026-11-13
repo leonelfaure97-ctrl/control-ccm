@@ -1,4 +1,4 @@
-const V='control-ccm-v9',SHELL=['./','index.html','manifest.json','logo.jpg','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png','icons/favicon.png'];
+const V='control-ccm-v10',SHELL=['./','index.html','manifest.json','logo.jpg','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png','icons/favicon.png'];
 const EXT=['cdn.tailwindcss.com','cdn.jsdelivr.net','www.gstatic.com'];
 
 self.addEventListener('install',e=>{

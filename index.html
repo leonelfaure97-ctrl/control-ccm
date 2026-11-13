@@ -14,7 +14,7 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
 <style>
-@media(max-width:768px){thead{display:none}table,tbody,tr,td{display:block;width:100%}tr{margin:0 0 .75rem;background:#1e293b;border:1px solid #334155;border-radius:.75rem;padding:.75rem}td{display:flex;justify-content:space-between;gap:.5rem;text-align:right;padding:.4rem 0;border-bottom:1px solid #33415566}td:before{content:attr(data-l);color:#94a3b8;text-align:left}td:last-child{border:0;justify-content:center;flex-wrap:wrap}td:last-child:before{content:none}}
+table{border-collapse:separate;border-spacing:0}thead th{border-right:1px solid #64748b;border-bottom:2px solid #94a3b8}thead th:last-child{border-right:0}tbody td{border-right:1px solid #475569;border-bottom:1px solid #64748b}tbody td:last-child{border-right:0}tbody tr:nth-child(even){background:#1b2a3d}@media(max-width:768px){thead{display:none}table,tbody,tr,td{display:block;width:100%}tr{margin:0 0 .75rem;background:#1e293b;border:1px solid #64748b;border-radius:.75rem;padding:.75rem}td{display:flex;justify-content:space-between;gap:.5rem;text-align:right;padding:.4rem 0;border-bottom:1px solid #64748b}td:before{content:attr(data-l);color:#94a3b8;text-align:left}td:last-child{border:0;justify-content:center;flex-wrap:wrap}td:last-child:before{content:none}}
 </style></head>
 <body class="bg-slate-900 text-slate-100 min-h-screen">
 
@@ -26,13 +26,14 @@
 <span id="st" class="text-xs px-3 py-1 rounded-full border"></span>
 <button id="b-ccm" data-act="vista" data-id="ccm" class="px-3 py-2 rounded-lg border border-slate-700 bg-blue-600">⚡ CCM</button>
 <button id="b-termo" data-act="vista" data-id="termo" class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800">🌡 Termografía</button>
+<button id="b-correctivos" data-act="vista" data-id="correctivos" class="px-3 py-2 rounded-lg border border-slate-700 bg-slate-800">🔔 Correctivos <span id="alerta-correctivos" class="text-amber-300">●</span></button>
+<button id="b-manuales" data-act="vista" data-id="manuales" title="Biblioteca de manuales" class="px-2.5 py-2 rounded-lg border border-slate-700 bg-slate-800">📖</button>
 <button data-act="nuevo" class="px-3 py-2 rounded-lg bg-[#1E7333] hover:bg-green-700 font-semibold">+ Nuevo</button>
 <label class="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 cursor-pointer">📊 Excel<input id="xl" type="file" accept=".xlsx,.xls,.csv" class="hidden"></label>
 </div></header>
 <section class="bg-slate-800/80 border-b border-slate-700 px-4 py-3 grid md:grid-cols-3 gap-3">
 <input id="q" placeholder="Buscar por Tag, Cubicle, CCM o Potencia..." class="md:col-span-2 w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm">
 <select id="fccm" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm"></select>
-<p id="search-hint" class="md:col-span-3 text-xs text-amber-300"></p>
 </section>
 <main class="flex-1 p-4">
 <div id="v-ccm" class="bg-slate-800 border border-slate-700 rounded-xl overflow-hidden"><table class="w-full text-left text-sm">
@@ -41,31 +42,31 @@
 <div id="v-termo" class="hidden bg-slate-800 border border-slate-700 rounded-xl overflow-hidden"><table class="w-full text-left text-sm">
 <thead><tr class="bg-slate-900/80 text-slate-400 text-xs uppercase"><th class="p-3">Tablero</th><th class="p-3">Columna</th><th class="p-3">Equipo</th><th class="p-3 text-center">Fase</th><th class="p-3">Temp</th><th class="p-3">N° foto</th><th class="p-3">Observaciones</th><th class="p-3 text-center">Imagen</th><th class="p-3 text-center">Acciones</th></tr></thead>
 <tbody id="tb-termo" class="divide-y divide-slate-700/50"></tbody></table></div>
+<div id="v-correctivos" class="hidden bg-slate-800 border border-slate-600 rounded-xl overflow-hidden"><div class="p-4 flex justify-between items-center gap-3 border-b border-slate-600"><div><h2 class="font-bold text-amber-300">Trabajos correctivos pendientes</h2><p class="text-xs text-slate-400">Fallas que requieren intervención</p></div><button data-act="nuevoCorrectivo" class="bg-[#1E7333] px-3 py-2 rounded-lg text-sm font-semibold">+ Crear trabajo</button></div><div class="overflow-x-auto"><table class="w-full text-left text-sm"><thead><tr class="bg-slate-900 text-slate-300 text-xs uppercase"><th class="p-3">Tag</th><th class="p-3">Cubicle</th><th class="p-3">CCM</th><th class="p-3">Descripción de la falla</th><th class="p-3">Acciones</th></tr></thead><tbody id="tb-correctivos"></tbody></table></div></div>
+<div id="v-manuales" class="hidden bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-4"><div class="flex justify-between items-center gap-3"><div><h2 class="font-bold text-blue-200">Biblioteca de manuales</h2><p class="text-xs text-slate-400">Documentos compartidos; descargalos para consultarlos offline</p></div><button data-act="nuevoManual" class="bg-[#1E7333] px-3 py-2 rounded-lg text-sm">+ Cargar manual</button></div><input id="qmanual" placeholder="Buscar por nombre o descripción..." class="w-full bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm"><div id="lista-manuales" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-3"></div></div>
 </main></div>
 <div id="modal" class="hidden"></div>
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,doc,updateDoc,deleteDoc,onSnapshot,writeBatch} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import {getStorage,ref as sref,uploadBytes,getDownloadURL,deleteObject} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
 const app=initializeApp({apiKey:"AIzaSyDi_vtxaFeAPeBoe2cupyrKIChrmKX-2RU",authDomain:"control-ccm.firebaseapp.com",databaseURL:"https://control-ccm-default-rtdb.firebaseio.com",projectId:"control-ccm",storageBucket:"control-ccm.firebasestorage.app",messagingSenderId:"14150602796",appId:"1:14150602796:web:649438a05f51a0c6ecc189"});
 // Caché persistente: los datos quedan en el dispositivo y las escrituras sin red se sincronizan solas
-const db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+const db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});const storage=getStorage(app);
 const col=n=>collection(db,n),$=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-// Normalización general: ignora mayúsculas, tildes, espacios, guiones y ceros iniciales en números.
-// Ej.: CIN-2, CIN-02, cin 2 y CIN 002 -> cin2. Nunca modifica el valor original guardado.
-const norm=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'').replace(/[0-9]+/g,n=>n.replace(/^0+(?=\d)/,''));
-const equipmentKey=(tag,cubicle)=>`${norm(tag)}|${norm(cubicle)}`;
-const equipmentMatchesByTag=tag=>{const key=norm(tag);return key?S.equipos.filter(e=>norm(e.tag)===key):[]};
-const resolveEquipmentTag=tag=>{const matches=equipmentMatchesByTag(tag);return {status:matches.length===1?'unique':matches.length?'ambiguous':'not-found',matches};};
+const norm=s=>String(s??'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
 const fmtT=v=>{v=String(v??'').trim();return /^[\d.,]+$/.test(v)?v+' °C':v};
-const S={equipos:[],termos:[],notas:[]};let vista='ccm',cur=null,fichaId=null,tmpImg='',un=[];
+const fmtA=v=>{v=String(v??'').trim();return v&&!/\bA$/i.test(v)?v+' A':v};
+const potParts=v=>{const m=String(v??'').trim().match(/^(.*?)(?:\s*)(kW|HP)$/i);return m?{v:m[1].trim(),u:m[2].toUpperCase()}:{v:String(v??''),u:'kW'}};
+const S={equipos:[],termos:[],notas:[],correctivos:[],manuales:[]};let vista='ccm',cur=null,fichaId=null,tmpImg='',un=[],manualFile=null;
 const fail=e=>{console.error(e);alert('No se pudo guardar: '+e.message)};
 const inp='w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm';
 const ARR=['','Directo (DOL)','Estrella - Triángulo','Arrancador Suave (Soft Starter)','Variador de Frecuencia (VFD)'];
 const FUS=['','NH00','NH0','NH1','NH2','NH3','Cilíndrico 10x38','Cilíndrico 14x51','Cilíndrico 22x58','Otro'];
-const FC=[['tag','Tag del equipo *'],['cubicle','Cubicle *'],['ccm','CCM *'],['sector','Sector / Área'],['potencia','Potencia (kW / HP)'],['inominal','Corriente nominal (A)'],['fusibleTipo','Tipo de fusible','select',FUS],['fusibleAmp','Calibre fusible (A)'],['arranque','Tipo de arranque','select',ARR],['notas','Notas','area']];
+const FC=[['tag','Tag del equipo *'],['cubicle','Cubicle *'],['ccm','CCM *'],['sector','Sector / Área'],['potencia','Potencia'],['potenciaUnidad','Unidad','select',['kW','HP']],['inominal','Corriente nominal (A)'],['fusibleTipo','Tipo de fusible','select',FUS],['fusibleAmp','Calibre fusible (A)'],['arranque','Tipo de arranque','select',ARR],['notas','Notas','area']];
 const FM=[['marca','Marca'],['hp','Potencia (HP)'],['rpm','RPM'],['cuerpo','Cuerpo'],['fconst','Forma constructiva (F. Const.)'],['inominal','Corriente nominal (A)']];
 const FT=[['tablero','Tablero *'],['columna','Columna *'],['equipo','Equipo *'],['temp','Temperatura *'],['foto','N° de foto'],['observaciones','Observaciones','area']];
 
@@ -79,43 +80,37 @@ const btns=(a,id,txt)=>`<div class="flex justify-end gap-2 pt-2"><button data-ac
 function comprimir(f,max,q){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const i=new Image();i.onload=()=>{const k=Math.min(1,max/Math.max(i.width,i.height)),c=document.createElement('canvas');c.width=i.width*k;c.height=i.height*k;c.getContext('2d').drawImage(i,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',q))};i.src=r.result};r.readAsDataURL(f)})}
 
 function render(){
- const rawQuery=$('#q').value,q=norm(rawQuery),tagMatches=equipmentMatchesByTag(rawQuery);
- $('#search-hint').textContent=tagMatches.length>1?`Hay ${tagMatches.length} equipos con un TAG equivalente. Revisá cubículo y CCM antes de elegir.`:'';
+ const q=norm($('#q').value);
+ if(vista==='correctivos'){const l=S.correctivos;$('#tb-correctivos').innerHTML=l.length?l.map(t=>`<tr><td data-l="Tag" class="p-3 text-amber-300">${esc(t.tag)}</td><td data-l="Cubicle" class="p-3">${esc(t.cubicle)}</td><td data-l="CCM" class="p-3">${esc(t.ccm)}</td><td data-l="Falla" class="p-3">${esc(t.descripcion)}</td><td class="p-3 text-center"><button data-act="reparar" data-id="${t.id}" class="bg-green-700 px-3 py-1.5 rounded text-xs">✓ Reparado</button></td></tr>`).join(''):'<tr><td colspan="5" class="p-6 text-center text-slate-400">No hay trabajos pendientes.</td></tr>';$('#alerta-correctivos').textContent=l.length?'●':'○';$('#alerta-correctivos').className=l.length?'text-amber-300':'text-slate-500';return}
+ if(vista==='manuales'){const qn=norm($('#qmanual').value);const l=S.manuales.filter(m=>norm([m.nombre,m.descripcion,m.nombreArchivo].join(' ')).includes(qn));$('#lista-manuales').innerHTML=l.length?l.map(m=>`<div class="bg-slate-900 border border-slate-600 rounded-xl p-3 space-y-2"><b class="text-sm text-blue-200">📄 ${esc(m.nombre)}</b><p class="text-xs text-slate-400">${esc(m.descripcion||m.nombreArchivo)}</p><div class="flex gap-2"><button data-act="abrirManual" data-id="${m.id}" class="bg-blue-700 px-3 py-1.5 rounded text-xs">Abrir / descargar</button><button data-act="eliminarManual" data-id="${m.id}" class="bg-slate-700 text-red-300 px-3 py-1.5 rounded text-xs">Eliminar</button></div></div>`).join(''):'<p class="text-sm text-slate-400 col-span-full text-center py-6">No hay manuales o no hay coincidencias.</p>';return}
  if(vista==='ccm'){
   const sel=$('#fccm'),v=sel.value,cc=[...new Set(S.equipos.map(e=>e.ccm).filter(Boolean))].sort();
   sel.innerHTML='<option value="">Todos los CCM</option>'+cc.map(c=>`<option ${c===v?'selected':''}>${esc(c)}</option>`).join('');
-  const l=S.equipos.filter(e=>(!sel.value||e.ccm===sel.value)&&(!q||[e.tag,e.cubicle,e.ccm,e.potencia].some(v=>norm(v).includes(q)))).sort((a,b)=>String(a.tag).localeCompare(String(b.tag),'es',{numeric:true}));
-  $('#tb-ccm').innerHTML=l.length?l.map(e=>`<tr class="hover:bg-slate-700/30 cursor-pointer" data-act="ficha" data-id="${e.id}"><td data-l="Tag" class="p-3 font-semibold text-green-400">${esc(e.tag)}</td><td data-l="Cubicle" class="p-3">${esc(e.cubicle)}</td><td data-l="CCM" class="p-3">${esc(e.ccm)}</td><td data-l="Potencia" class="p-3">${esc(e.potencia)}</td><td data-l="Corriente nominal" class="p-3">${esc(e.inominal)}</td><td data-l="Arranque" class="p-3">${e.arranque?`<span class="bg-slate-700/50 px-2 py-1 rounded text-xs">${esc(e.arranque)}</span>`:'-'}</td><td class="p-3 text-center"><button data-act="editEq" data-id="${e.id}" class="bg-slate-700 text-green-400 px-2.5 py-1.5 rounded-lg text-xs">Editar</button> <button data-act="delEq" data-id="${e.id}" class="bg-slate-700 text-red-400 px-2.5 py-1.5 rounded-lg text-xs">Eliminar</button></td></tr>`).join(''):'<tr><td class="p-8 text-center text-slate-400">No hay equipos. Cargá un Excel o agregá uno nuevo.</td></tr>';
+  const l=S.equipos.filter(e=>(!sel.value||e.ccm===sel.value)&&norm([e.tag,e.cubicle,e.ccm,e.potencia].join(' ')).includes(q)).sort((a,b)=>String(a.tag).localeCompare(String(b.tag),'es',{numeric:true}));
+  $('#tb-ccm').innerHTML=l.length?l.map(e=>`<tr class="hover:bg-slate-700/30 cursor-pointer" data-act="ficha" data-id="${e.id}"><td data-l="Tag" class="p-3 font-semibold text-green-400">${esc(e.tag)}</td><td data-l="Cubicle" class="p-3">${esc(e.cubicle)}</td><td data-l="CCM" class="p-3">${esc(e.ccm)}</td><td data-l="Potencia" class="p-3">${esc(e.potencia)}</td><td data-l="Corriente nominal" class="p-3">${esc(fmtA(e.inominal))}</td><td data-l="Arranque" class="p-3">${e.arranque?`<span class="bg-slate-700/50 px-2 py-1 rounded text-xs">${esc(e.arranque)}</span>`:'-'}</td><td class="p-3 text-center"><button data-act="editEq" data-id="${e.id}" class="bg-slate-700 text-green-400 px-2.5 py-1.5 rounded-lg text-xs">Editar</button> <button data-act="delEq" data-id="${e.id}" class="bg-slate-700 text-red-400 px-2.5 py-1.5 rounded-lg text-xs">Eliminar</button></td></tr>`).join(''):'<tr><td class="p-8 text-center text-slate-400">No hay equipos. Cargá un Excel o agregá uno nuevo.</td></tr>';
  }else{
-  const l=S.termos.filter(t=>!q||[t.tablero,t.columna,t.equipo,t.observaciones].some(v=>norm(v).includes(q))).sort((a,b)=>String(a.tablero).localeCompare(String(b.tablero),'es',{numeric:true}));
+  const l=S.termos.filter(t=>norm([t.tablero,t.columna,t.equipo,t.observaciones].join(' ')).includes(q)).sort((a,b)=>String(a.tablero).localeCompare(String(b.tablero),'es',{numeric:true}));
   $('#tb-termo').innerHTML=l.length?l.map(t=>{const f=t.fases||{},b=(x,c)=>`<span class="px-1.5 rounded ${f[x]?c+' text-white font-bold':'bg-slate-800 text-slate-500'}">${x.toUpperCase()}</span>`;
    return `<tr><td data-l="Tablero" class="p-3 font-semibold text-amber-400">${esc(t.tablero)}</td><td data-l="Columna" class="p-3">${esc(t.columna)}</td><td data-l="Equipo" class="p-3">${esc(t.equipo)}</td><td data-l="Fase" class="p-3 text-center font-mono text-xs">${b('r','bg-red-600')} ${b('s','bg-amber-600')} ${b('t','bg-blue-600')}</td><td data-l="Temp" class="p-3 font-bold">${esc(fmtT(t.temp))||'-'}</td><td data-l="N° foto" class="p-3 font-mono text-xs">${esc(t.foto)||'-'}</td><td data-l="Obs." class="p-3 text-xs">${esc(t.observaciones)||'-'}</td><td data-l="Imagen" class="p-3 text-center">${t.imagen?`<button data-act="img" data-id="${t.id}" class="bg-slate-700 text-amber-300 px-2.5 py-1 rounded text-xs">Ver foto</button>`:'<span class="text-xs text-slate-500">Sin imagen</span>'}</td><td class="p-3 text-center"><button data-act="editT" data-id="${t.id}" class="bg-slate-700 text-amber-400 px-2.5 py-1.5 rounded-lg text-xs">Editar</button> <button data-act="delT" data-id="${t.id}" class="bg-slate-700 text-red-400 px-2.5 py-1.5 rounded-lg text-xs">Eliminar</button></td></tr>`}).join(''):'<tr><td class="p-8 text-center text-slate-400">No hay registros termográficos.</td></tr>';
  }
  if(fichaId)A.ficha(fichaId);
 }
 
-const rel=(t,e)=>{
- const tag=norm(e.tag);if(!tag)return false;
- // Si hay más de un equipo con el mismo TAG normalizado, no atribuimos registros automáticamente.
- const resolved=resolveEquipmentTag(e.tag);if(resolved.status!=='unique')return false;
- return [t.equipo,t.columna,t.tablero].some(x=>norm(x)===tag||String(x||'').split(/[\s,;/()]+/).some(part=>norm(part)===tag));
-};
+const rel=(t,e)=>{const tag=String(e.tag||'').toLowerCase();return tag&&[t.equipo,t.columna,t.tablero].some(x=>String(x||'').toLowerCase().split(/[\s,;/()]+/).includes(tag))};
 const A={
- vista(v){vista=v;$('#v-ccm').classList.toggle('hidden',v!=='ccm');$('#v-termo').classList.toggle('hidden',v!=='termo');$('#fccm').classList.toggle('hidden',v!=='ccm');
-  for(const x of['ccm','termo']){$('#b-'+x).classList.toggle('bg-blue-600',x===v);$('#b-'+x).classList.toggle('bg-slate-800',x!==v)}
-  $('#titulo').textContent=v==='ccm'?'Gestión de Cubicles y CCM':'Inspección Termográfica';$('#q').placeholder=v==='ccm'?'Buscar por Tag, Cubicle, CCM o Potencia...':'Buscar por Tablero, Columna, Equipo u Observaciones...';render()},
- nuevo(){vista==='ccm'?A.editEq():A.editT()},
+ vista(v){vista=v;for(const x of['ccm','termo','correctivos','manuales']){const el=$('#v-'+x),b=$('#b-'+x);if(el)el.classList.toggle('hidden',x!==v);if(b){b.classList.toggle('bg-blue-600',x===v);b.classList.toggle('bg-slate-800',x!==v)}}$('#fccm').classList.toggle('hidden',v!=='ccm');$('#q').parentElement.classList.toggle('hidden',v==='manuales');$('#titulo').textContent=({ccm:'Gestión de Cubicles y CCM',termo:'Inspección Termográfica',correctivos:'Trabajos correctivos',manuales:'Biblioteca de manuales'})[v];render()},
+ nuevo(){if(vista==='ccm')A.editEq();else if(vista==='termo')A.editT();else if(vista==='correctivos')A.nuevoCorrectivo();else A.nuevoManual()},
  cerrar:closeModal,
- editEq(id){const e=S.equipos.find(x=>x.id===id)||{arranque:ARR[0]};fichaId=null;modal(head(id?'Editar equipo':'Nuevo equipo')+'<div class="grid grid-cols-2 gap-3">'+FC.map(f=>field(f,e[f[0]])).join('')+'</div>'+btns('saveEq',id,'Guardar'))},
- saveEq(id){const d=get(FC);if(!d.tag||!d.cubicle||!d.ccm)return alert('Completá Tag, Cubicle y CCM.');
+ editEq(id){const e=S.equipos.find(x=>x.id===id)||{arranque:ARR[0]};const pp=potParts(e.potencia),d={...e,potencia:pp.v,potenciaUnidad:e.potenciaUnidad||pp.u};fichaId=null;modal(head(id?'Editar equipo':'Nuevo equipo')+'<div class="grid grid-cols-2 gap-3">'+FC.map(f=>field(f,d[f[0]])).join('')+'</div>'+btns('saveEq',id,'Guardar'))},
+ saveEq(id){const d=get(FC);if(!d.tag||!d.cubicle||!d.ccm)return alert('Completá Tag, Cubicle y CCM.');d.potencia=d.potencia.trim()?(d.potencia.trim()+' '+d.potenciaUnidad):'';delete d.potenciaUnidad;d.inominal=fmtA(d.inominal);
   (id?updateDoc(doc(db,'equipos_ccm',id),d):addDoc(col('equipos_ccm'),d)).catch(fail);closeModal()},
  delEq(id){if(confirm('¿Eliminar este equipo?'))deleteDoc(doc(db,'equipos_ccm',id)).catch(fail)},
  ficha(id){const e=S.equipos.find(x=>x.id===id);if(!e)return closeModal();fichaId=id;
   const k=(l,v)=>`<div><span class="text-slate-400 text-xs block">${l}</span><b>${esc(v)||'-'}</b></div>`,tag=String(e.tag||'').toLowerCase();
-  const ns=S.notas.filter(n=>n.equipoId===id||(!n.equipoId&&resolveEquipmentTag(n.tag).status==='unique'&&norm(n.tag)===norm(e.tag))).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
+  const ns=S.notas.filter(n=>String(n.tag||'').toLowerCase()===tag).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
   const ts=S.termos.filter(t=>rel(t,e));
-  modal(head('⚡ '+esc(e.tag))+`<div class="grid grid-cols-2 gap-3 bg-slate-900 p-3 rounded-xl text-sm">${k('Cubicle',e.cubicle)}${k('CCM',e.ccm)}${k('Sector',e.sector)}${k('Arranque',e.arranque)}${k('Potencia',e.potencia)}${k('Corriente nominal',e.inominal)}${k('Fusible',e.fusibleTipo)}${k('Calibre fusible',e.fusibleAmp)}</div>${e.notas?`<p class="text-xs italic text-slate-300">${esc(e.notas)}</p>`:''}
-  <button data-act="motor" data-id="${id}" class="w-full bg-blue-700 hover:bg-blue-600 rounded-lg py-2 text-sm font-semibold">⚙️ Motor</button>
+  modal(head('⚡ '+esc(e.tag))+`<div class="grid grid-cols-2 gap-3 bg-slate-900 p-3 rounded-xl text-sm">${k('Cubicle',e.cubicle)}${k('CCM',e.ccm)}${k('Sector',e.sector)}${k('Arranque',e.arranque)}${k('Potencia',e.potencia)}${k('Corriente nominal',fmtA(e.inominal))}${k('Fusible',e.fusibleTipo)}${k('Calibre fusible',e.fusibleAmp)}</div>${e.notas?`<p class="text-xs italic text-slate-300">${esc(e.notas)}</p>`:''}
+  <div class="grid grid-cols-2 gap-2"><button data-act="motor" data-id="${id}" class="bg-blue-700 rounded-lg py-2 text-sm font-semibold">⚙️ Motor</button><button data-act="nuevoCorrectivo" data-id="${id}" class="bg-amber-700 rounded-lg py-2 text-sm font-semibold">⚠ Crear trabajo correctivo</button></div>
   <div class="flex justify-between items-center"><b class="text-sm">Historial</b><button data-act="nota" data-id="${id}" class="bg-[#1E7333] px-3 py-1.5 rounded-lg text-xs">+ Nota / reparación</button></div>`
   +ns.map(n=>`<div class="bg-slate-900 border border-green-900/50 p-3 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b class="text-green-300">🔧 ${esc(n.titulo)}</b><span class="font-mono text-slate-400">${esc(n.fecha)}</span></div><p class="text-slate-300">${esc(n.detalle)}</p><button data-act="delN" data-id="${n.id}" class="text-slate-500 hover:text-red-400">Eliminar nota</button></div>`).join('')
   +ts.map(t=>{const f=t.fases||{};return `<div class="bg-slate-900 border border-slate-700 p-3 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b class="text-amber-400">🌡 ${esc(t.tablero)} / ${esc(t.columna)}</b><span class="font-mono text-amber-300">${esc(fmtT(t.temp))}</span></div><div>Equipo: ${esc(t.equipo)} · Foto: ${esc(t.foto)||'-'} · Fases: ${['r','s','t'].filter(x=>f[x]).join(' ').toUpperCase()||'-'}</div>${t.observaciones?`<p class="italic text-slate-400">${esc(t.observaciones)}</p>`:''}${t.imagen?`<button data-act="img" data-id="${t.id}" class="text-amber-400 underline">Ver foto</button>`:''}</div>`}).join('')
@@ -127,7 +122,7 @@ const A={
   modal(head('Datos del motor · '+esc(e.tag),'text-blue-400')+'<div class="grid grid-cols-2 gap-3">'+FM.map(f=>field(f,m[f[0]])).join('')+'</div>'+`<div class="flex justify-end gap-2 pt-2"><button data-act="motor" data-id="${id}" class="px-4 py-2 rounded-lg text-sm bg-slate-700">Cancelar</button><button data-act="saveMotor" data-id="${id}" class="px-4 py-2 rounded-lg text-sm bg-[#1E7333] font-semibold">Guardar</button></div>`)},
  saveMotor(id){const e=S.equipos.find(x=>x.id===id);if(!e)return;e.motor=get(FM);updateDoc(doc(db,'equipos_ccm',id),{motor:e.motor}).catch(fail);A.motor(id)},
  nota(id){cur=S.equipos.find(x=>x.id===id);fichaId=null;modal(head('Nueva nota / reparación')+`<div><label class="text-xs text-slate-400">Fecha *</label><input id="n_f" type="date" value="${new Date().toISOString().slice(0,10)}" class="${inp}"></div><div><label class="text-xs text-slate-400">Título *</label><input id="n_t" placeholder="Ej: Cambio de rodamientos" class="${inp}"></div><div><label class="text-xs text-slate-400">Detalle *</label><textarea id="n_d" rows="3" class="${inp}"></textarea></div>`+btns('saveN',id,'Guardar nota'))},
- saveN(id){const d={tag:cur.tag,equipoId:cur.id,fecha:$('#n_f').value,titulo:$('#n_t').value.trim(),detalle:$('#n_d').value.trim()};if(!d.titulo||!d.detalle)return alert('Completá título y detalle.');
+ saveN(id){const d={tag:cur.tag,fecha:$('#n_f').value,titulo:$('#n_t').value.trim(),detalle:$('#n_d').value.trim()};if(!d.titulo||!d.detalle)return alert('Completá título y detalle.');
   addDoc(col('historial_equipos'),d).catch(fail);A.ficha(id)},
  delN(id){if(confirm('¿Eliminar esta nota?'))deleteDoc(doc(db,'historial_equipos',id)).catch(fail)},
  editT(id){const t=S.termos.find(x=>x.id===id)||{},f=t.fases||{};fichaId=null;tmpImg=t.imagen||'';
@@ -137,10 +132,18 @@ const A={
   d.temp=fmtT(d.temp);d.fases={r:$('#p_r').checked,s:$('#p_s').checked,t:$('#p_t').checked};d.imagen=tmpImg;
   (id?updateDoc(doc(db,'termografias',id),d):addDoc(col('termografias'),d)).catch(fail);closeModal()},
  delT(id){if(confirm('¿Eliminar esta inspección?'))deleteDoc(doc(db,'termografias',id)).catch(fail)},
+ nuevoCorrectivo(id){const e=S.equipos.find(x=>x.id===id)||{};fichaId=null;modal(head('⚠ Nuevo trabajo correctivo','text-amber-300')+`<div class="grid grid-cols-2 gap-3"><div><label class="text-xs">Tag *</label><input id="c_tag" value="${esc(e.tag||'')}" class="${inp}"></div><div><label class="text-xs">Cubicle *</label><input id="c_cubicle" value="${esc(e.cubicle||'')}" class="${inp}"></div><div><label class="text-xs">CCM *</label><input id="c_ccm" value="${esc(e.ccm||'')}" class="${inp}"></div><div class="col-span-2"><label class="text-xs">Descripción de la falla *</label><textarea id="c_desc" rows="3" class="${inp}"></textarea></div></div>`+btns('saveCorrectivo',id,'Crear trabajo'))},
+ saveCorrectivo(){const d={tag:$('#c_tag').value.trim(),cubicle:$('#c_cubicle').value.trim(),ccm:$('#c_ccm').value.trim(),descripcion:$('#c_desc').value.trim(),fecha:new Date().toISOString().slice(0,10)};if(!d.tag||!d.cubicle||!d.ccm||!d.descripcion)return alert('Completá todos los campos.');addDoc(col('trabajos_correctivos'),d).catch(fail);closeModal()},
+ reparar(id){const t=S.correctivos.find(x=>x.id===id);if(!t)return;modal(head('Confirmar reparación','text-green-300')+`<p class="text-sm">${esc(t.tag)} · ${esc(t.descripcion)}</p><label class="text-xs">Detalle de la reparación *</label><textarea id="c_rep" rows="3" class="${inp}"></textarea>`+btns('confirmarReparado',id,'Guardar en historial'))},
+ async confirmarReparado(id){const t=S.correctivos.find(x=>x.id===id),d=$('#c_rep').value.trim();if(!t||!d)return alert('Ingresá el detalle de la reparación.');try{await addDoc(col('historial_equipos'),{tag:t.tag,fecha:new Date().toISOString().slice(0,10),titulo:'Trabajo correctivo reparado',detalle:`Falla: ${t.descripcion}\nReparación: ${d}\nUbicación: ${t.cubicle} · ${t.ccm}`});await deleteDoc(doc(db,'trabajos_correctivos',id));closeModal()}catch(e){fail(e)}},
+ nuevoManual(){manualFile=null;modal(head('Cargar manual','text-blue-300')+`<label class="text-xs">Nombre *</label><input id="m_nombre" class="${inp}"><label class="text-xs">Descripción</label><textarea id="m_desc" class="${inp}" rows="2"></textarea><label class="text-xs">Archivo PDF, Word, Excel, PowerPoint o imagen *</label><input id="m_file" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.jpg,.jpeg,.png" class="block w-full text-sm"><p class="text-xs text-slate-500">Máximo 25 MB. Para usar offline, cada dispositivo debe descargar el documento al menos una vez.</p>`+btns('saveManual','','Subir'));$('#m_file').onchange=e=>manualFile=e.target.files[0]||null},
+ async saveManual(){const f=manualFile,n=$('#m_nombre').value.trim();if(!f||!n)return alert('Ingresá el nombre y elegí un archivo.');if(f.size>25*1024*1024)return alert('Máximo 25 MB.');try{const path=`manuales/${Date.now()}_${f.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;await uploadBytes(sref(storage,path),f,{contentType:f.type||'application/octet-stream'});const url=await getDownloadURL(sref(storage,path));await addDoc(col('manuales'),{nombre:n,descripcion:$('#m_desc').value.trim(),nombreArchivo:f.name,tipo:f.type||'',path,url,fecha:new Date().toISOString().slice(0,10)});closeModal()}catch(e){fail(e)}},
+ async abrirManual(id){const m=S.manuales.find(x=>x.id===id);if(!m)return;try{let blob=await manualCacheGet(id);if(!blob){const r=await fetch(m.url);if(!r.ok)throw Error();blob=await r.blob();await manualCachePut(id,blob)}const u=URL.createObjectURL(blob);if(m.nombreArchivo.toLowerCase().endsWith('.pdf'))modal(head(esc(m.nombre),'text-blue-300')+`<iframe src="${u}" class="w-full bg-white rounded" style="height:70vh"></iframe>`);else{const a=document.createElement('a');a.href=u;a.download=m.nombreArchivo;a.click()}}catch(e){alert('No está descargado en este dispositivo y no hay conexión. Conectate para descargarlo primero.')}},
+ async eliminarManual(id){const m=S.manuales.find(x=>x.id===id);if(!m||!confirm('¿Eliminar este manual para todos?'))return;try{await deleteObject(sref(storage,m.path));await deleteDoc(doc(db,'manuales',id))}catch(e){fail(e)}},
  img(id){const t=S.termos.find(x=>x.id===id);if(t?.imagen){fichaId=null;modal(head('Imagen térmica','text-amber-400')+`<img src="${esc(t.imagen)}" class="max-w-full rounded-lg mx-auto">`)}}
 };
 document.addEventListener('click',e=>{if(e.target.id==='modal')return closeModal();const b=e.target.closest('[data-act]');if(b)A[b.dataset.act]?.(b.dataset.id)});
-$('#q').oninput=render;$('#fccm').onchange=render;
+$('#q').oninput=render;$('#fccm').onchange=render;$('#qmanual').oninput=render;
 
 // Importación desde Excel / CSV
 const MC={tag:['tag','tagequipo','equipo'],cubicle:['cubicle'],ccm:['ccm'],sector:['sector','area','sectorarea'],potencia:['potencia','pothp','potenciahp'],inominal:['inominal','inom','corrientenominal','corriente'],arranque:['arranque','tipodearranque'],fusibleTipo:['fusibletipo','tipodefusible','tipodefusibles','fusible'],fusibleAmp:['fusibleamp','calibre','calibrefusible'],notas:['notas']};
@@ -152,30 +155,27 @@ async function importCCM(f){
  const wb=XLSX.read(await f.arrayBuffer()),sn=wb.SheetNames[0],rows=XLSX.utils.sheet_to_json(wb.Sheets[sn],{defval:''});
  const hasCcm=rows.some(r=>Object.keys(r).some(k=>norm(k)==='ccm'));let ccmDef='';
  if(!hasCcm)ccmDef=(prompt('La planilla no trae columna CCM. ¿A qué CCM pertenecen estos equipos? (vacío = no asignar)',sn)||'').trim();
- const ex=new Map();for(const x of S.equipos){const key=equipmentKey(x.tag,x.cubicle);if(!ex.has(key))ex.set(key,[]);ex.get(key).push(x.id)}
- const ops=[],vistos=new Set();let nu=0,ac=0,ambiguos=0,duplicados=0;
+ const ex=new Map(S.equipos.map(x=>[norm(x.tag+x.cubicle),x.id])),ops=[];let nu=0,ac=0;
  for(const r of rows){const d={};for(const k in MC)d[k]=pick(r,MC[k]);if(!d.tag)continue;if(!d.ccm)d.ccm=ccmDef;
-  const m={};for(const k in MM)m[k]=pick(r,MM[k]);const tm=Object.values(m).some(Boolean),key=equipmentKey(d.tag,d.cubicle);
-  if(vistos.has(key)){duplicados++;continue}vistos.add(key);
-  const ids=ex.get(key)||[];
-  if(ids.length>1){ambiguos++;continue}
-  if(ids.length===1){const u={};for(const k in d)if(d[k])u[k]=d[k];if(tm)for(const k in m)if(m[k])u['motor.'+k]=m[k];ops.push(['u',ids[0],u]);ac++}
-  else{if(tm)d.motor=m;ops.push(['n',null,d]);nu++;ex.set(key,[])}}
+  const m={};for(const k in MM)m[k]=pick(r,MM[k]);const tm=Object.values(m).some(Boolean),key=norm(d.tag+d.cubicle),id=ex.get(key);
+  if(id==='x')continue;
+  if(id){const u={};for(const k in d)if(d[k])u[k]=d[k];if(tm)for(const k in m)if(m[k])u['motor.'+k]=m[k];ops.push(['u',id,u]);ac++}
+  else{if(tm)d.motor=m;ops.push(['n',null,d]);nu++;ex.set(key,'x')}}
  for(let i=0;i<ops.length;i+=400){const b=writeBatch(db);ops.slice(i,i+400).forEach(([t,id,d])=>t==='u'?b.update(doc(db,'equipos_ccm',id),d):b.set(doc(col('equipos_ccm')),d));b.commit().catch(fail)}
- alert(`${nu} equipos nuevos y ${ac} actualizados.`+(duplicados?`\n${duplicados} filas repetidas omitidas.`:'')+(ambiguos?`\n${ambiguos} filas omitidas por coincidencias ambiguas de TAG + cubículo.`:'')+(hasCcm||ccmDef?'':'\nSin CCM asignado: no aparecerán en el filtro por CCM.'))}
+ alert(`${nu} equipos nuevos y ${ac} actualizados.`+(hasCcm||ccmDef?'':'\nSin CCM asignado: no aparecerán en el filtro por CCM.'))}
 // Termografía desde .xlsx: las fases con relleno verde en R, S o T son las marcadas
 function verde(c){const f=c.fill,k=f&&f.type==='pattern'&&f.pattern!=='none'&&f.fgColor;if(!k||!k.argb)return false;const h=k.argb.slice(-6),r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);return g>r+30&&g>b+30}
 async function importTermoXlsx(f){
  const wb=new ExcelJS.Workbook();await wb.xlsx.load(await f.arrayBuffer());const ws=wb.worksheets[0];let hr=0,H={};
  ws.eachRow((row,n)=>{if(hr)return;const m={};row.eachCell({includeEmpty:false},(c,i)=>{const k=norm(c.text);if(k&&!(k in m))m[k]=i});if(m.tablero){hr=n;H=m}});
  if(!hr)throw new Error('No encontré la fila de encabezados (TABLERO, COLUMNA, EQUIPO...).');
- const fc=H.fase??H.r,ex=new Set(S.termos.map(x=>[x.tablero,x.columna,x.equipo,x.foto].map(norm).join('|'))),out=[];let marc=0,dup=0;
+ const fc=H.fase??H.r,ex=new Set(S.termos.map(x=>norm([x.tablero,x.columna,x.equipo,x.foto].join()))),out=[];let marc=0,dup=0;
  for(let n=hr+1;n<=ws.rowCount;n++){const row=ws.getRow(n),g=k=>H[k]?row.getCell(H[k]).text.trim():'';
   const d={tablero:g('tablero'),columna:g('columna'),equipo:g('equipo'),foto:g('ndefoto')||g('foto'),observaciones:g('observaciones')};
   if(!d.tablero&&!d.equipo)continue;
   d.temp=fmtT(g('temp'));
   d.fases=fc?{r:verde(row.getCell(fc)),s:verde(row.getCell(fc+1)),t:verde(row.getCell(fc+2))}:{r:false,s:false,t:false};
-  const key=[d.tablero,d.columna,d.equipo,d.foto].map(norm).join('|');if(ex.has(key)){dup++;continue}ex.add(key);
+  const key=norm([d.tablero,d.columna,d.equipo,d.foto].join());if(ex.has(key)){dup++;continue}ex.add(key);
   if(d.fases.r||d.fases.s||d.fases.t)marc++;out.push(d)}
  for(let i=0;i<out.length;i+=400){const b=writeBatch(db);out.slice(i,i+400).forEach(d=>b.set(doc(col('termografias')),d));b.commit().catch(fail)}
  alert(`${out.length} inspecciones cargadas, ${marc} con fases marcadas en verde.`+(dup?`\n${dup} repetidas omitidas.`:'')+(out.length&&!marc?'\nNo se detectó ninguna celda verde en R, S o T. Revisá que el color sea un relleno directo de la celda.':''))}
@@ -183,16 +183,20 @@ $('#xl').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)re
  if(vista==='ccm')return importCCM(f).catch(x=>alert('No se pudo importar: '+x.message));
  if(vista==='termo'&&/\.xlsx$/i.test(f.name))return importTermoXlsx(f).catch(x=>alert('No se pudo importar: '+x.message));
  try{const wb=XLSX.read(await f.arrayBuffer()),rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
-  const ccm=vista==='ccm',M=ccm?MC:MT,c=ccm?'equipos_ccm':'termografias',ex=new Set(S.equipos.map(x=>equipmentKey(x.tag,x.cubicle))),out=[];
+  const ccm=vista==='ccm',M=ccm?MC:MT,c=ccm?'equipos_ccm':'termografias',ex=new Set(S.equipos.map(x=>norm(x.tag+x.cubicle))),out=[];
   for(const r of rows){const d={};for(const k in M)d[k]=pick(r,M[k]);
-   if(ccm){if(!d.tag)continue;const key=equipmentKey(d.tag,d.cubicle);if(ex.has(key))continue;ex.add(key)}
+   if(ccm){if(!d.tag)continue;const key=norm(d.tag+d.cubicle);if(ex.has(key))continue;ex.add(key)}
    else{if(!d.tablero&&!d.equipo)continue;d.fases={r:false,s:false,t:false};d.temp=fmtT(d.temp)}
    out.push(d)}
   for(let i=0;i<out.length;i+=400){const b=writeBatch(db);out.slice(i,i+400).forEach(d=>b.set(doc(col(c)),d));b.commit().catch(fail)}
   alert(`${out.length} registros cargados de ${rows.length} filas (los duplicados se omiten).`+(ccm?'':'\nCon .xls/.csv no se leen los colores de las fases: guardá la planilla como .xlsx.'))}catch(x){fail(x)}};
 
+const manualDB=()=>new Promise((ok,no)=>{const r=indexedDB.open('control-ccm-manuales',1);r.onupgradeneeded=()=>r.result.createObjectStore('docs');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+async function manualCachePut(k,v){const d=await manualDB();return new Promise((ok,no)=>{const t=d.transaction('docs','readwrite');t.objectStore('docs').put(v,k);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
+async function manualCacheGet(k){const d=await manualDB();return new Promise((ok,no)=>{const r=d.transaction('docs').objectStore('docs').get(k);r.onsuccess=()=>ok(r.result||null);r.onerror=()=>no(r.error)})}
+
 // Datos en tiempo real (sin login por ahora)
-[['equipos_ccm','equipos'],['termografias','termos'],['historial_equipos','notas']].forEach(([c,k])=>onSnapshot(col(c),s=>{S[k]=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(c,e)));
+[['equipos_ccm','equipos'],['termografias','termos'],['historial_equipos','notas'],['trabajos_correctivos','correctivos'],['manuales','manuales']].forEach(([c,k])=>onSnapshot(col(c),s=>{S[k]=s.docs.map(d=>({id:d.id,...d.data()}));render()},e=>console.error(c,e)));
 function st(){const o=navigator.onLine;$('#st').textContent=o?'● En línea':'● Sin conexión';$('#st').className='text-xs px-3 py-1 rounded-full border '+(o?'bg-emerald-950 text-emerald-400 border-emerald-800':'bg-amber-950 text-amber-300 border-amber-800')}
 addEventListener('online',st);addEventListener('offline',st);st();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');

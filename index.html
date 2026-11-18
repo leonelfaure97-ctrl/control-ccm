@@ -211,7 +211,7 @@ document.addEventListener('click',e=>{if(e.target.id==='modal')return closeModal
 $('#q').oninput=render;$('#fccm').onchange=render;$('#fyear').onchange=render;$('#fmonth').onchange=render;$('#qmanual').oninput=render;$('#qbio').oninput=render;
 
 // Importación desde Excel / CSV
-const MC={tag:['tag','tagequipo','equipo'],cubicle:['cubicle'],ccm:['ccm'],area:['area','sector','sectorarea'],potencia:['potencia','pothp','potenciahp'],inominal:['inominal','inom','corrientenominal','corriente'],arranque:['arranque','tipodearranque'],fusibleTipo:['fusibletipo','tipodefusible','tipodefusibles','fusible'],fusibleAmp:['fusibleamp','calibre','calibrefusible'],cables:['cables','seccioncables','seccioncable'],notas:['notas']};
+const MC={tag:['tag','tagequipo','equipo'],cubicle:['cubicle'],ccm:['ccm'],area:['area','sector','sectorarea'],potencia:['potencia','pothp','potenciahp'],inominal:['inominal','inom','corrientenominal','corriente'],arranque:['arranque','tipodearranque'],fusibleTipo:['fusibletipo','tipodefusible','tipodefusibles'],fusibleAmp:['fusible','fusibleamp','calibre','calibrefusible'],cables:['cables','seccioncables','seccioncable'],notas:['notas']};
 const MT={tablero:['tablero'],columna:['columna'],equipo:['equipo'],temp:['temp','temperatura'],foto:['ndefoto','foto','nfoto','nrofoto'],observaciones:['observaciones','obs'],area:['area','sector','sectorarea']};
 const pick=(r,al)=>{for(const k in r)if(al.includes(norm(k)))return String(r[k]).trim();return''};
 // Equipos + motor desde una sola planilla (ubicación y datos de motor por fila)
@@ -222,7 +222,7 @@ async function importCCM(f){
  if(!hasCcm)ccmDef=(prompt('La planilla no trae columna CCM. ¿A qué CCM pertenecen estos equipos? (vacío = no asignar)',sn)||'').trim();
  const ex=new Map(S.equipos.map(x=>[equipoKey(x),x.id])),ops=[];let nu=0,ac=0;
  let areaDef=activeArea===ALL_AREA?'':activeArea;if(activeArea===ALL_AREA&&!rows.some(r=>Object.keys(r).some(k=>['area','sector','sectorarea'].includes(norm(k)))))areaDef=prompt('La planilla no trae columna Área. ¿A qué área pertenecen estos equipos? (L1, L2, L3, SERVICIOS, PUERTO o LOGÍSTICA)','')||'';
- for(const r of rows){const d={};for(const k in MC)d[k]=pick(r,MC[k]);if(!d.tag)continue;if(activeArea!==ALL_AREA)d.area=activeArea;else if(!d.area)d.area=areaDef;if(!AREAS.some(a=>norm(a)===norm(d.area||'')))continue;if(!d.ccm)d.ccm=ccmDef;
+ for(const r of rows){const d={};for(const k in MC)d[k]=pick(r,MC[k]);if(d.fusibleAmp){const amp=numeroAmperes(d.fusibleAmp);if(amp!==null)d.fusibleAmp=amp;}if(!d.tag)continue;if(activeArea!==ALL_AREA)d.area=activeArea;else if(!d.area)d.area=areaDef;if(!AREAS.some(a=>norm(a)===norm(d.area||'')))continue;if(!d.ccm)d.ccm=ccmDef;
   const m={};for(const k in MM)m[k]=pick(r,MM[k]);const tm=Object.values(m).some(Boolean),key=equipoKey(d),id=ex.get(key);
   if(id==='x')continue;
   if(id){const u={};for(const k in d)if(d[k])u[k]=d[k];if(tm)for(const k in m)if(m[k])u['motor.'+k]=m[k];ops.push(['u',id,u]);ac++}

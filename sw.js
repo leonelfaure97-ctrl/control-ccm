@@ -1,35 +1,70 @@
-const V='control-ccm-v15',SHELL=['./','index.html','manifest.json','logo.jpg','icons/icon-192.png','icons/icon-512.png','icons/apple-touch-icon.png','icons/favicon.png'];
-const EXT=['cdn.tailwindcss.com','cdn.jsdelivr.net','www.gstatic.com'];
+const CACHE = 'control-ccm-v16';
 
-self.addEventListener('install',e=>{
-  e.waitUntil(caches.open(V).then(c=>c.addAll(SHELL)));
+const SHELL = [
+  './',
+  'index.html',
+  'manifest.json',
+  'logo.jpg',
+  'icons/icon-192.png',
+  'icons/icon-512.png',
+  'icons/apple-touch-icon.png',
+  'icons/favicon.png'
+];
+
+const EXT = [
+  'cdn.tailwindcss.com',
+  'cdn.jsdelivr.net',
+  'www.gstatic.com'
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE).then(cache => cache.addAll(SHELL))
+  );
   self.skipWaiting();
 });
 
-self.addEventListener('activate',e=>{
-  e.waitUntil(
-    caches.keys()
-      .then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x))))
-      .then(()=>self.clients.claim())
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys
+          .filter(key => key.startsWith('control-ccm-') && key !== CACHE)
+          .map(key => caches.delete(key))
+      )
+    )
   );
+  self.clients.claim();
 });
 
-self.addEventListener('fetch',e=>{
-  const r=e.request,u=new URL(r.url);
+self.addEventListener('fetch', event => {
+  const request = event.request;
+  const url = new URL(request.url);
 
-  if(r.method!=='GET'||!(u.origin===location.origin||EXT.includes(u.hostname)))return;
+  if (request.method !== 'GET') return;
 
-  e.respondWith(
-    caches.match(r,{ignoreSearch:true}).then(hit=>{
-      const net=fetch(r).then(res=>{
-        if(res.ok){
-          const cp=res.clone();
-          caches.open(V).then(c=>c.put(r,cp));
-        }
-        return res;
-      }).catch(()=>hit||caches.match('index.html'));
+  if (EXT.some(host => url.hostname.includes(host))) {
+    event.respondWith(
+      caches.match(request).then(cached =>
+        cached || fetch(request).then(response => {
+          const copy = response.clone();
+          caches.open(CACHE).then(cache => cache.put(request, copy));
+          return response;
+        })
+      )
+    );
+    return;
+  }
 
-      return hit||net;
-    })
-  );
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      fetch(request).then(response => {
+        const copy = response.clone();
+        caches.open(CACHE).then(cache => cache.put(request, copy));
+        return response;
+      }).catch(() =>
+        caches.match(request).then(cached => cached || caches.match('./index.html'))
+      )
+    );
+  }
 });

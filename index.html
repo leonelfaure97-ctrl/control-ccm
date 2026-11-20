@@ -69,7 +69,7 @@ table{border-collapse:separate;border-spacing:0}thead th{border-right:1px solid 
 
 <script type="module">
 import {initializeApp} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,doc,updateDoc,deleteDoc,onSnapshot,writeBatch,setDoc} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,addDoc,doc,updateDoc,deleteDoc,onSnapshot,writeBatch} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const app=initializeApp({apiKey:"AIzaSyDi_vtxaFeAPeBoe2cupyrKIChrmKX-2RU",authDomain:"control-ccm.firebaseapp.com",databaseURL:"https://control-ccm-default-rtdb.firebaseio.com",projectId:"control-ccm",storageBucket:"control-ccm.firebasestorage.app",messagingSenderId:"14150602796",appId:"1:14150602796:web:649438a05f51a0c6ecc189"});
 // Caché persistente: los datos quedan en el dispositivo y las escrituras sin red se sincronizan solas
@@ -88,7 +88,7 @@ const fmtT=v=>{v=String(v??'').trim();return /^[\d.,]+$/.test(v)?v+' °C':v};
 const fmtA=v=>{v=String(v??'').trim();return v&&!/\bA$/i.test(v)?v+' A':v};
 const potParts=v=>{const m=String(v??'').trim().match(/^(.*?)(?:\s*)(kW|HP)$/i);return m?{v:m[1].trim(),u:m[2].toUpperCase()}:{v:String(v??''),u:'kW'}};
 const S={equipos:[],termos:[],notas:[],correctivos:[],manuales:[],bios:[]};
-let equiposReady=false,correctivosReady=false;const fusiblesEnCreacion=new Set();
+
 let activeArea=(()=>{try{return localStorage.getItem('control-ccm-area')||''}catch(e){return ''}})();
 let termosReady=false,restoredTermoDraftFor='';
 let vista=(()=>{try{return localStorage.getItem('control-ccm-vista')||'ccm'}catch(e){return 'ccm'}})(),cur=null,fichaId=null,tmpImg='',un=[];
@@ -166,7 +166,7 @@ const A={
   const k=(l,v)=>`<div><span class="text-slate-400 text-xs block">${l}</span><b>${esc(v)||'-'}</b></div>`,tag=norm(e.tag||'');
   const ns=S.notas.filter(n=>norm(n.tag||'')===tag&&inArea(n)).sort((a,b)=>String(b.fecha).localeCompare(String(a.fecha)));
   const ts=S.termos.filter(t=>rel(t,e)&&inArea(t));
-  const fs=estadoFusible(e);modal(head('⚡ '+esc(e.tag))+`<div class="grid grid-cols-2 gap-3 bg-slate-900 p-3 rounded-xl text-sm">${k('Cubicle',e.cubicle)}${k('CCM',e.ccm)}${k('Área',areaOf(e))}${k('Arranque',e.arranque)}${k('Potencia',e.potencia)}${k('Corriente nominal',fmtA(e.inominal))}${k('Tipo de fusible',e.fusibleTipo)}${k('Fusible instalado',fmtA(e.fusibleAmp))}${k('Fusible recomendado',fs.recomendado?fs.recomendado+' A':fs.texto)}${k('Sección cables',e.cables)}</div>${fs.tipo==='diferencia'?`<div class="rounded-lg border border-amber-700 bg-amber-950/40 p-3 text-sm text-amber-200">⚠ Diferencia detectada. Se generó automáticamente un trabajo correctivo por cambio de fusibles.</div>`:fs.tipo==='fuera-rango'?`<div class="rounded-lg border border-red-800 bg-red-950/40 p-3 text-sm text-red-200">La corriente calculada supera el mayor calibre disponible (800 A). Requiere revisión técnica.</div>`:''}${e.notas?`<p class="text-xs italic text-slate-300">${esc(e.notas)}</p>`:''}
+  const fs=estadoFusible(e);modal(head('⚡ '+esc(e.tag))+`<div class="grid grid-cols-2 gap-3 bg-slate-900 p-3 rounded-xl text-sm">${k('Cubicle',e.cubicle)}${k('CCM',e.ccm)}${k('Área',areaOf(e))}${k('Arranque',e.arranque)}${k('Potencia',e.potencia)}${k('Corriente nominal',fmtA(e.inominal))}${k('Tipo de fusible',e.fusibleTipo)}${k('Fusible instalado',fmtA(e.fusibleAmp))}${k('Fusible recomendado',fs.recomendado?fs.recomendado+' A':fs.texto)}${k('Sección cables',e.cables)}</div>${fs.tipo==='diferencia'?`<div class="rounded-lg border border-amber-700 bg-amber-950/40 p-3 text-sm text-amber-200">⚠ Diferencia detectada. Revisar el fusible instalado. Esta advertencia es informativa y no genera un trabajo correctivo.</div>`:fs.tipo==='fuera-rango'?`<div class="rounded-lg border border-red-800 bg-red-950/40 p-3 text-sm text-red-200">La corriente calculada supera el mayor calibre disponible (800 A). Requiere revisión técnica.</div>`:''}${e.notas?`<p class="text-xs italic text-slate-300">${esc(e.notas)}</p>`:''}
   <div class="grid grid-cols-2 gap-2"><button data-act="motor" data-id="${id}" class="bg-blue-700 rounded-lg py-2 text-sm font-semibold">⚙️ Motor</button><button data-act="nuevoCorrectivo" data-id="${id}" class="bg-amber-700 rounded-lg py-2 text-sm font-semibold">⚠ Crear trabajo correctivo</button></div>
   <div class="flex justify-between items-center gap-2 flex-wrap"><b class="text-sm">Historial</b><div class="flex gap-2"><button data-act="exportarHistorial" data-id="${id}" class="bg-emerald-800 px-3 py-1.5 rounded-lg text-xs">⬇ Excel</button><button data-act="nota" data-id="${id}" class="bg-[#1E7333] px-3 py-1.5 rounded-lg text-xs">+ Nota / reparación</button></div></div>`
   +ns.map(n=>`<div class="bg-slate-900 border border-green-900/50 p-3 rounded-xl text-xs space-y-1"><div class="flex justify-between"><b class="text-green-300">🔧 ${esc(n.titulo)}</b><span class="font-mono text-slate-400">${esc(n.fecha)}</span></div><p class="text-slate-300">${esc(n.detalle)}</p><button data-act="delN" data-id="${n.id}" class="text-slate-500 hover:text-red-400">Eliminar nota</button></div>`).join('')
@@ -261,19 +261,6 @@ const manualDB=()=>new Promise((ok,no)=>{const r=indexedDB.open('control-ccm-man
 async function manualCachePut(k,v){const d=await manualDB();return new Promise((ok,no)=>{const t=d.transaction('docs','readwrite');t.objectStore('docs').put(v,k);t.oncomplete=ok;t.onerror=()=>no(t.error)})}
 async function manualCacheGet(k){const d=await manualDB();return new Promise((ok,no)=>{const r=d.transaction('docs').objectStore('docs').get(k);r.onsuccess=()=>ok(r.result||null);r.onerror=()=>no(r.error)})}
 
-// Crea un único correctivo automático por equipo cuando el fusible instalado no coincide.
-// El ID determinístico evita duplicados incluso si varios dispositivos detectan la diferencia a la vez.
-function sincronizarCorrectivosFusibles(){
- if(!equiposReady||!correctivosReady)return;
- for(const e of S.equipos){
-  const fs=estadoFusible(e);if(fs.tipo!=='diferencia')continue;
-  const id='fusible-'+e.id;if(S.correctivos.some(t=>t.id===id)||fusiblesEnCreacion.has(id))continue;
-  const instalado=numeroAmperes(e.fusibleAmp),recomendado=fs.recomendado,fecha=new Date().toISOString().slice(0,10);
-  const d={tag:e.tag||'',cubicle:e.cubicle||'',ccm:e.ccm||'',area:areaOf(e)||'',fecha,tipo:'cambio_fusibles',equipoId:e.id,fusibleInstalado:instalado,fusibleRecomendado:recomendado,descripcion:`CAMBIO DE FUSIBLES: instalado ${instalado} A; recomendado ${recomendado} A según corriente nominal ${numeroAmperes(e.inominal)} A × 1,5 y tabla comercial de planta. Verificar tipo de carga, arranque, cableado y coordinación de protecciones antes del reemplazo.`};
-  fusiblesEnCreacion.add(id);
-  setDoc(doc(db,'trabajos_correctivos',id),d).catch(err=>{console.error('No se pudo crear el correctivo automático de fusibles',err);fusiblesEnCreacion.delete(id)});
- }
-}
 // Datos en tiempo real (sin login por ahora)
 function corregirFusiblesAntiguos(docs){
   for(const snap of docs){
@@ -286,7 +273,7 @@ function corregirFusiblesAntiguos(docs){
     }
   }
 }
-[['equipos_ccm','equipos'],['termografias','termos'],['historial_equipos','notas'],['trabajos_correctivos','correctivos'],['manuales','manuales'],['bios','bios']].forEach(([c,k])=>onSnapshot(col(c),s=>{if(k==='equipos')corregirFusiblesAntiguos(s.docs);S[k]=s.docs.map(d=>({id:d.id,...d.data()}));if(k==='equipos')equiposReady=true;if(k==='correctivos'){correctivosReady=true;const ids=new Set(S.correctivos.map(t=>t.id));for(const id of fusiblesEnCreacion)if(ids.has(id))fusiblesEnCreacion.delete(id)}if(k==='termos'){termosReady=true;restoreTermoDraft()}sincronizarCorrectivosFusibles();render()},e=>console.error(c,e)));
+[['equipos_ccm','equipos'],['termografias','termos'],['historial_equipos','notas'],['trabajos_correctivos','correctivos'],['manuales','manuales'],['bios','bios']].forEach(([c,k])=>onSnapshot(col(c),s=>{if(k==='equipos')corregirFusiblesAntiguos(s.docs);S[k]=s.docs.map(d=>({id:d.id,...d.data()}));if(k==='termos'){termosReady=true;restoreTermoDraft()}render()},e=>console.error(c,e)));
 function st(){const o=navigator.onLine;$('#st').textContent=o?'● En línea':'● Sin conexión';$('#st').className='text-xs px-3 py-1 rounded-full border '+(o?'bg-emerald-950 text-emerald-400 border-emerald-800':'bg-amber-950 text-amber-300 border-amber-800')}
 addEventListener('online',st);addEventListener('offline',st);st();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');

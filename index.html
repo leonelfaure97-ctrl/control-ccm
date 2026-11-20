@@ -262,18 +262,9 @@ async function manualCachePut(k,v){const d=await manualDB();return new Promise((
 async function manualCacheGet(k){const d=await manualDB();return new Promise((ok,no)=>{const r=d.transaction('docs').objectStore('docs').get(k);r.onsuccess=()=>ok(r.result||null);r.onerror=()=>no(r.error)})}
 
 // Datos en tiempo real (sin login por ahora)
-function corregirFusiblesAntiguos(docs){
-  for(const snap of docs){
-    const e=snap.data();
-    const tipo=String(e.fusibleTipo??'').trim();
-    // Recupera valores antiguos como '250 A' guardados por error en Tipo de fusible.
-    if((e.fusibleAmp===undefined||e.fusibleAmp===null||String(e.fusibleAmp).trim()==='') && /^\d+(?:[.,]\d+)?\s*A$/i.test(tipo)){
-      const amp=numeroAmperes(tipo);
-      if(amp!==null)updateDoc(doc(db,'equipos_ccm',snap.id),{fusibleAmp:amp,fusibleTipo:''}).catch(err=>console.error('No se pudo corregir el fusible del equipo '+snap.id,err));
-    }
-  }
-}
-[['equipos_ccm','equipos'],['termografias','termos'],['historial_equipos','notas'],['trabajos_correctivos','correctivos'],['manuales','manuales'],['bios','bios']].forEach(([c,k])=>onSnapshot(col(c),s=>{if(k==='equipos')corregirFusiblesAntiguos(s.docs);S[k]=s.docs.map(d=>({id:d.id,...d.data()}));if(k==='termos'){termosReady=true;restoreTermoDraft()}render()},e=>console.error(c,e)));
+// No ejecutar migraciones automáticas de fusibles al recibir snapshots:
+// evita escrituras repetidas al iniciar o sincronizar la aplicación.
+[['equipos_ccm','equipos'],['termografias','termos'],['historial_equipos','notas'],['trabajos_correctivos','correctivos'],['manuales','manuales'],['bios','bios']].forEach(([c,k])=>onSnapshot(col(c),s=>{S[k]=s.docs.map(d=>({id:d.id,...d.data()}));if(k==='termos'){termosReady=true;restoreTermoDraft()}render()},e=>console.error(c,e)));
 function st(){const o=navigator.onLine;$('#st').textContent=o?'● En línea':'● Sin conexión';$('#st').className='text-xs px-3 py-1 rounded-full border '+(o?'bg-emerald-950 text-emerald-400 border-emerald-800':'bg-amber-950 text-amber-300 border-amber-800')}
 addEventListener('online',st);addEventListener('offline',st);st();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js');
